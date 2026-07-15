@@ -134,6 +134,13 @@
     letter-spacing: -0.035em;
   }
 
+  /* Buttons read as clickable everywhere — browsers default <button> to the
+     arrow cursor and only some call sites added cursor-pointer by hand. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   /* Slim, theme-aware scrollbars everywhere (replaces the chunky browser
      default). WebKit gets a 8px gutter with a 4px pill thumb (transparent
      border + content-box clip); Firefox uses its native thin variant. */
