@@ -20,12 +20,20 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+interface DateRangeSelection {
+  from?: Date
+  to?: Date
+}
+
 interface CalendarProps {
-  mode?: 'single'
+  mode?: 'single' | 'range'
   selected?: Date
+  /** Range mode: current selection; first click sets from, second sets to. */
+  selectedRange?: DateRangeSelection
   defaultMonth?: Date
   locale?: Locale
   onSelect?: (date: Date | undefined) => void
+  onSelectRange?: (range: DateRangeSelection) => void
   className?: string
 }
 
@@ -33,14 +41,37 @@ type View = 'days' | 'months' | 'years'
 const YEAR_PAGE_SIZE = 12
 
 function Calendar({
+  mode = 'single',
   selected,
+  selectedRange,
   defaultMonth,
   locale,
   onSelect,
+  onSelectRange,
   className,
 }: CalendarProps) {
-  const [viewMonth, setViewMonth] = useState(defaultMonth ?? selected ?? new Date())
+  const [viewMonth, setViewMonth] = useState(
+    defaultMonth ?? (mode === 'range' ? selectedRange?.from : selected) ?? new Date(),
+  )
   const [view, setView] = useState<View>('days')
+  // Range mode: day under the cursor, for previewing from→hover before the
+  // second click lands.
+  const [hoverDay, setHoverDay] = useState<Date | null>(null)
+
+  const handleDayClick = (d: Date) => {
+    if (mode !== 'range') {
+      onSelect?.(d)
+      return
+    }
+    const { from, to } = selectedRange ?? {}
+    if (!from || to) {
+      onSelectRange?.({ from: d, to: undefined })
+    } else if (d < from) {
+      onSelectRange?.({ from: d, to: from })
+    } else {
+      onSelectRange?.({ from, to: d })
+    }
+  }
 
   const currentYear = viewMonth.getFullYear()
   const yearPageStart = Math.floor(currentYear / YEAR_PAGE_SIZE) * YEAR_PAGE_SIZE
@@ -130,18 +161,49 @@ function Calendar({
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7">
+          <div className="grid grid-cols-7" onMouseLeave={() => setHoverDay(null)}>
             {weeks.map((week, wi) =>
               week.map((d, di) => {
                 const inMonth = isSameMonth(d, viewMonth)
-                const isSelected = selected && isSameDay(d, selected)
                 const today = isToday(d)
 
+                if (mode === 'range') {
+                  const { from, to } = selectedRange ?? {}
+                  // With only the start picked, preview the span to the cursor.
+                  const previewEnd = to ?? (from && hoverDay && hoverDay > from ? hoverDay : undefined)
+                  const isStart = from && isSameDay(d, from)
+                  const isEnd = (to && isSameDay(d, to)) || (!to && isStart)
+                  const inRange = from && previewEnd && d > from && d < previewEnd
+                  return (
+                    <button
+                      key={`${wi}-${di}`}
+                      type="button"
+                      onClick={() => handleDayClick(d)}
+                      onMouseEnter={() => setHoverDay(d)}
+                      className={cn(
+                        'size-8 inline-flex items-center justify-center text-sm transition-colors',
+                        isStart || isEnd ? 'rounded-lg' : inRange ? 'rounded-none' : 'rounded-lg',
+                        isStart && !to && 'rounded-lg',
+                        isStart && to && !isSameDay(from!, to) && 'rounded-r-none',
+                        isEnd && to && from && !isSameDay(from, to) && 'rounded-l-none',
+                        !inMonth && !inRange && !isStart && !isEnd && 'text-muted-foreground/40',
+                        inMonth && !isStart && !isEnd && !inRange && 'text-foreground hover:bg-muted/60',
+                        today && !isStart && !isEnd && !inRange && 'bg-accent text-accent-foreground font-medium',
+                        inRange && 'bg-primary/15 text-foreground',
+                        (isStart || isEnd) && 'bg-primary text-primary-foreground font-semibold',
+                      )}
+                    >
+                      {d.getDate()}
+                    </button>
+                  )
+                }
+
+                const isSelected = selected && isSameDay(d, selected)
                 return (
                   <button
                     key={`${wi}-${di}`}
                     type="button"
-                    onClick={() => onSelect?.(d)}
+                    onClick={() => handleDayClick(d)}
                     className={cn(
                       'size-8 inline-flex items-center justify-center rounded-lg text-sm transition-colors',
                       !inMonth && 'text-muted-foreground/40',
@@ -220,4 +282,4 @@ function Calendar({
 }
 
 export { Calendar }
-export type { CalendarProps }
+export type { CalendarProps, DateRangeSelection }
