@@ -782,7 +782,14 @@ export default function ReportsPage() {
             {isLoading ? (
               <div className="px-2"><Skeleton className="h-[360px] w-full" /></div>
             ) : (
-              <CashflowSankey composition={composition} currency={userCurrency} locale={locale} />
+              <CashflowSankey
+                composition={composition}
+                currency={userCurrency}
+                locale={locale}
+                groupIndex={groupIndex}
+                expandedGroups={expandedCatGroups}
+                onToggleGroup={toggleCatGroup}
+              />
             )}
           </div>
         </div>

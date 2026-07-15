@@ -1215,6 +1215,8 @@
     "deficit": "Deficyt",
     "cashFlowNode": "Przepływ pieniędzy",
     "flowChartAria": "Diagram przepływu pieniędzy: przychody przepływające do wydatków",
+    "clickToExpand": "Kliknij, aby rozwinąć",
+    "clickToCollapse": "Kliknij, aby zwinąć",
     "category": "Kategoria",
     "amount": "Kwota",
     "investments": "Inwestycje",

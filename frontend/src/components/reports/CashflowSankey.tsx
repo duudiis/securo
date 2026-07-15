@@ -7,6 +7,7 @@ import {
 } from 'd3-sankey'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import type { ReportCompositionItem } from '@/types'
+import type { CategoryGroupIndex, GroupBucket } from '@/lib/category-groups'
 
 // Colour carries MEANING, not category identity: green = money in, red = money
 // out, gray = uncategorised/folded. Tinting by category (the old approach) made
@@ -38,7 +39,14 @@ interface SankeyNodeDatum {
   name: string
   color: string
   side: 'income' | 'center' | 'expense' | 'investment'
+  /** Set on a collapsed category-group node — clicking expands it. */
+  groupId?: string
+  /** Set on nodes of an expanded group — clicking collapses it back. */
+  memberOfGroupId?: string
 }
+
+/** A composition item annotated with its category-group toggle target. */
+type RolledItem = ReportCompositionItem & { groupId?: string; memberOfGroupId?: string }
 
 interface SankeyLinkDatum {
   source: number
@@ -65,7 +73,7 @@ function formatMoney(value: number, currency: string, locale: string, compact: b
 }
 
 /** Sort largest-first, then fold everything past the cap into a single "Other". */
-function collapse(items: ReportCompositionItem[], otherLabel: string): ReportCompositionItem[] {
+function collapse(items: RolledItem[], otherLabel: string): RolledItem[] {
   const sorted = [...items].sort((a, b) => b.value - a.value)
   if (sorted.length <= MAX_NODES_PER_SIDE) return sorted
   const top = sorted.slice(0, MAX_NODES_PER_SIDE - 1)
@@ -81,9 +89,14 @@ interface CashflowSankeyProps {
   composition: ReportCompositionItem[]
   currency: string
   locale: string
+  /** category id → category group lookup for the group-level rollup. */
+  groupIndex: CategoryGroupIndex
+  /** Category groups currently expanded into their member categories. */
+  expandedGroups: Set<string>
+  onToggleGroup: (groupId: string) => void
 }
 
-export function CashflowSankey({ composition, currency, locale }: CashflowSankeyProps) {
+export function CashflowSankey({ composition, currency, locale, groupIndex, expandedGroups, onToggleGroup }: CashflowSankeyProps) {
   const { t } = useTranslation()
   const { privacyMode, MASK } = usePrivacyMode()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -101,18 +114,54 @@ export function CashflowSankey({ composition, currency, locale }: CashflowSankey
   }, [])
 
   const { nodes: rawNodes, links: rawLinks, hasData } = useMemo(() => {
+    // Fold categories into their category groups first; expanded groups keep
+    // their member categories as individual nodes. Pseudo-items
+    // (uncategorized/other) have no group and pass through untouched.
+    const rollup = (items: ReportCompositionItem[]): RolledItem[] => {
+      const byBucket = new Map<string, { bucket: GroupBucket; members: ReportCompositionItem[] }>()
+      const out: RolledItem[] = []
+      for (const c of items) {
+        const bucket = groupIndex.bucketByCategoryId.get(c.key)
+        if (!bucket) {
+          out.push(c)
+          continue
+        }
+        let entry = byBucket.get(bucket.id)
+        if (!entry) {
+          entry = { bucket, members: [] }
+          byBucket.set(bucket.id, entry)
+        }
+        entry.members.push(c)
+      }
+      for (const { bucket, members } of byBucket.values()) {
+        if (expandedGroups.has(bucket.id)) {
+          out.push(...members.map((m) => ({ ...m, memberOfGroupId: bucket.id })))
+        } else {
+          out.push({
+            key: `catgroup-${bucket.id}`,
+            label: bucket.isUngrouped ? t('groups.noGroup') : bucket.name,
+            value: members.reduce((s, m) => s + m.value, 0),
+            color: bucket.color,
+            group: members[0].group,
+            groupId: bucket.id,
+          })
+        }
+      }
+      return out
+    }
+
     const income = collapse(
-      composition.filter((c) => c.group === 'income' && c.value > 0),
+      rollup(composition.filter((c) => c.group === 'income' && c.value > 0)),
       t('reports.other'),
     )
     const expense = collapse(
-      composition.filter((c) => c.group === 'expenses' && c.value > 0),
+      rollup(composition.filter((c) => c.group === 'expenses' && c.value > 0)),
       t('reports.other'),
     )
     // Investments are a third outflow lane — money set aside, neither spent nor
     // surplus. Treated like Sure's "Investment Contributions" node.
     const investment = collapse(
-      composition.filter((c) => c.group === 'investments' && c.value > 0),
+      rollup(composition.filter((c) => c.group === 'investments' && c.value > 0)),
       t('reports.other'),
     )
 
@@ -148,6 +197,8 @@ export function CashflowSankey({ composition, currency, locale }: CashflowSankey
         name: labelFor(c),
         color: isNeutral(c) ? NEUTRAL_COLOR : INCOME_COLOR,
         side: 'income',
+        groupId: c.groupId,
+        memberOfGroupId: c.memberOfGroupId,
       }),
     )
 
@@ -171,6 +222,8 @@ export function CashflowSankey({ composition, currency, locale }: CashflowSankey
         name: labelFor(c),
         color: isNeutral(c) ? NEUTRAL_COLOR : EXPENSE_COLOR,
         side: 'expense',
+        groupId: c.groupId,
+        memberOfGroupId: c.memberOfGroupId,
       }),
     )
 
@@ -180,6 +233,8 @@ export function CashflowSankey({ composition, currency, locale }: CashflowSankey
         name: c.key === 'other' ? t('reports.other') : c.label,
         color: c.key === 'other' ? NEUTRAL_COLOR : INVEST_COLOR,
         side: 'investment',
+        groupId: c.groupId,
+        memberOfGroupId: c.memberOfGroupId,
       }),
     )
 
@@ -204,7 +259,7 @@ export function CashflowSankey({ composition, currency, locale }: CashflowSankey
     }
 
     return { nodes, links, hasData: true }
-  }, [composition, t])
+  }, [composition, t, groupIndex, expandedGroups])
 
   // Tall enough that the busier side's nodes don't crowd; grows with node count.
   const maxSide = useMemo(() => {
@@ -417,14 +472,19 @@ export function CashflowSankey({ composition, currency, locale }: CashflowSankey
               const onLeft = x0 < width / 2
               const labelX = onLeft ? x1 + 8 : x0 - 8
               const ly = labelY.get(i) ?? (y0 + y1) / 2
+              const toggleId = node.groupId ?? node.memberOfGroupId
               return (
                 <g
                   key={i}
-                  style={{ transition: 'opacity 0.2s ease', opacity: dimmed ? 0.35 : 1 }}
+                  style={{ transition: 'opacity 0.2s ease', opacity: dimmed ? 0.35 : 1, cursor: toggleId ? 'pointer' : undefined }}
                   onMouseEnter={() => setHover({ kind: 'node', index: i })}
+                  onClick={toggleId ? () => onToggleGroup(toggleId) : undefined}
                 >
                   <rect x={x0} y={y0} width={Math.max(1, x1 - x0)} height={nodeHeight} fill={node.color} rx={3}>
-                    <title>{node.name}: {fmtAmount(node.value ?? 0)}</title>
+                    <title>
+                      {node.name}: {fmtAmount(node.value ?? 0)}
+                      {node.groupId ? ` — ${t('reports.clickToExpand')}` : node.memberOfGroupId ? ` — ${t('reports.clickToCollapse')}` : ''}
+                    </title>
                   </rect>
                   <text
                     x={labelX}
@@ -435,6 +495,11 @@ export function CashflowSankey({ composition, currency, locale }: CashflowSankey
                     style={{ fontSize: 11, fontWeight: 500 }}
                   >
                     {node.name}
+                    {toggleId && (
+                      <tspan className="fill-muted-foreground" style={{ fontSize: 9 }}>
+                        {node.groupId ? ' ▸' : ' ▾'}
+                      </tspan>
+                    )}
                     <tspan
                       x={labelX}
                       dy={13}

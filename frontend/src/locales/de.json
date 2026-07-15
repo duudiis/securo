@@ -1146,6 +1146,8 @@
     "deficit": "Defizit",
     "cashFlowNode": "Geldfluss",
     "flowChartAria": "Geldfluss-Diagramm: Einnahmequellen fließen hin zu Ausgaben",
+    "clickToExpand": "Zum Aufklappen klicken",
+    "clickToCollapse": "Zum Zuklappen klicken",
     "category": "Kategorie",
     "amount": "Betrag",
     "investments": "Investitionen",

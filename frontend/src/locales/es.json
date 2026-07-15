@@ -1146,6 +1146,8 @@
     "deficit": "Déficit",
     "cashFlowNode": "Flujo de caja",
     "flowChartAria": "Diagrama de flujo de caja: ingresos que fluyen hacia los gastos",
+    "clickToExpand": "Clic para expandir",
+    "clickToCollapse": "Clic para contraer",
     "category": "Categoría",
     "amount": "Importe",
     "investments": "Inversiones",

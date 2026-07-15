@@ -1146,6 +1146,8 @@
     "deficit": "Deficit",
     "cashFlowNode": "Cash Flow",
     "flowChartAria": "Cashflow diagram: income sources flowing through to expenses",
+    "clickToExpand": "Click to expand",
+    "clickToCollapse": "Click to collapse",
     "category": "Category",
     "amount": "Amount",
     "investments": "Investments",

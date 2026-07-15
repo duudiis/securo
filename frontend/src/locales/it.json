@@ -1146,6 +1146,8 @@
     "deficit": "Disavanzo",
     "cashFlowNode": "Flusso di cassa",
     "flowChartAria": "Diagramma del flusso di cassa: entrate che confluiscono nelle spese",
+    "clickToExpand": "Clicca per espandere",
+    "clickToCollapse": "Clicca per comprimere",
     "category": "Categoria",
     "amount": "Importo",
     "investments": "Investimenti",
