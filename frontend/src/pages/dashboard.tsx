@@ -46,6 +46,7 @@ import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useToggleSet } from '@/hooks/use-toggle-set'
 import { buildCategoryGroupIndex, rollupByGroup } from '@/lib/category-groups'
 import { usePageDateFilter } from '@/hooks/use-page-date-filter'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { DateRangeFilter } from '@/components/date-range-filter'
 import { useAuth } from '@/contexts/auth-context'
 import { useCollectionFilter } from '@/contexts/collection-filter-context'
@@ -583,6 +584,10 @@ export default function DashboardPage() {
         }
       />
 
+      <SkeletonSurface
+        pageKey="dashboard"
+        loading={summaryLoading || spendingLoading || balanceHistoryLoading}
+      >
       {/* Hero Card: Savings Rate + Uncategorized CTA */}
       <div className="bg-card rounded-xl border border-border shadow-sm mb-5">
         <div className="grid grid-cols-1 lg:grid-cols-3">
@@ -1332,6 +1337,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      </SkeletonSurface>
 
       <TransactionDrillDown
         filter={

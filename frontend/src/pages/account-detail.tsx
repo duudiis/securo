@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowLeftRight, CalendarClock, ChevronLeft, ChevronRight, Clock, EyeClosed, HelpCircle, Paperclip, Pencil, X } from 'lucide-react'
 import { CategoryIcon } from '@/components/category-icon'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { TransactionDialog, extractApiError } from '@/components/transaction-dialog'
 import { TransferDialog } from '@/components/transfer-dialog'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
@@ -729,17 +730,7 @@ export default function AccountDetailPage() {
 
   const isLoading = accountLoading || summaryLoading
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-64" />
-      </div>
-    )
-  }
-
-  if (!account) {
+  if (!account && !isLoading) {
     return <p className="text-muted-foreground">{t('accounts.notFound')}</p>
   }
 
@@ -760,13 +751,13 @@ export default function AccountDetailPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight truncate">
-              {getAccountName(account)}
+              {account ? getAccountName(account) : ''}
             </h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="text-xs font-medium text-muted-foreground">
-                {t(`accounts.type${account.type.split('_').map(s => s[0].toUpperCase() + s.slice(1)).join('')}`, account.type)}
+                {account ? t(`accounts.type${account.type.split('_').map(s => s[0].toUpperCase() + s.slice(1)).join('')}`, account.type) : null}
               </span>
-              {isCreditCard && account.next_due_date && (() => {
+              {isCreditCard && account?.next_due_date && (() => {
                 const d = daysUntil(account.next_due_date)
                 if (d > 7) return null
                 const cfg = d < 0
@@ -785,7 +776,7 @@ export default function AccountDetailPage() {
                   </>
                 )
               })()}
-              {isCreditCard && canWrite && (!account.statement_close_day || !account.payment_due_day) && (
+              {isCreditCard && canWrite && (!account?.statement_close_day || !account?.payment_due_day) && (
                 <>
                   <span className="text-muted-foreground text-xs">·</span>
                   <button
@@ -801,7 +792,7 @@ export default function AccountDetailPage() {
               )}
             </div>
           </div>
-          {!account.is_closed && canWrite && (
+          {account && !account.is_closed && canWrite && (
             <Button
               variant="outline"
               size="sm"
@@ -910,7 +901,7 @@ export default function AccountDetailPage() {
               {t('transactions.clearFilters')}
             </Button>
           )}
-          {isForeignCurrency && (
+          {isForeignCurrency && account && (
             <div className="ml-auto inline-flex rounded-lg border border-border bg-muted p-0.5 text-xs font-medium">
               <button
                 onClick={() => setShowPrimary(false)}
@@ -929,7 +920,8 @@ export default function AccountDetailPage() {
         </div>
       </div>
 
-      {account.is_closed && (
+      <SkeletonSurface pageKey="account-detail" loading={isLoading}>
+      {account?.is_closed && (
         <div className="flex items-center justify-between rounded-lg border border-border bg-muted px-4 py-3 mb-6">
           <span className="text-sm text-muted-foreground">{t('accounts.closedBanner')}</span>
           {canWrite && (
@@ -946,7 +938,7 @@ export default function AccountDetailPage() {
       )}
 
       {/* Bill timeline (last 6 cycles) — only for CC with cycle metadata */}
-      {isCreditCard && timelineCycles.length > 0 && (() => {
+      {isCreditCard && account && timelineCycles.length > 0 && (() => {
         const dfLocale = resolveDateFnsLocale(i18n.resolvedLanguage ?? i18n.language)
         const totals = timelineQueries.map((q, i) => {
           const c = timelineCycles[i]
@@ -1010,7 +1002,7 @@ export default function AccountDetailPage() {
       })()}
 
       {/* Compact stat bar */}
-      {isCreditCard ? (() => {
+      {isCreditCard && account ? (() => {
         // Total da fatura. When a real bill is active, sum debits from the
         // bill_id-filtered tx list (matches the bank app — bills' total_amount
         // can lag any charges added since the last sync). Otherwise use the
@@ -1153,7 +1145,7 @@ export default function AccountDetailPage() {
         </div>
       )}
 
-      {isCreditCard && (() => {
+      {isCreditCard && account && (() => {
         const limit = account.credit_limit != null ? Number(account.credit_limit) : null
         // Cycle-bound utilization: how much of the limit was charged in the cycle
         // currently being viewed. For the current cycle this matches the "current
@@ -1450,7 +1442,7 @@ export default function AccountDetailPage() {
                             </span>
                           )}
                         </td>
-                        <td className={`px-4 py-3 text-right tabular-nums text-sm hidden sm:table-cell ${(account.type === 'credit_card' ? tx.runningBalance > 0 : tx.runningBalance < 0) ? 'text-rose-500' : 'text-muted-foreground'}`}>
+                        <td className={`px-4 py-3 text-right tabular-nums text-sm hidden sm:table-cell ${(account?.type === 'credit_card' ? tx.runningBalance > 0 : tx.runningBalance < 0) ? 'text-rose-500' : 'text-muted-foreground'}`}>
                           {mask(formatCurrency(tx.runningBalance, displayCurrency, locale))}
                         </td>
                       </tr>
@@ -1462,6 +1454,7 @@ export default function AccountDetailPage() {
           )}
         </div>
       </div>
+      </SkeletonSurface>
 
       <TransactionDialog
         open={dialogOpen}

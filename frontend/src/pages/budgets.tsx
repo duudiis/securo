@@ -20,6 +20,7 @@ import { format } from 'date-fns'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { MonthPicker } from '@/components/ui/monthpicker'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { CategoryIcon } from '@/components/category-icon'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
@@ -71,17 +72,17 @@ export default function BudgetsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Budget | null>(null)
 
-  const { data: budgetsList } = useQuery({
+  const { data: budgetsList, isLoading: budgetsLoading } = useQuery({
     queryKey: ['budgets', selectedMonth],
     queryFn: () => budgetsApi.list(monthParam),
   })
 
-  const { data: categoriesList } = useQuery({
+  const { data: categoriesList, isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: categoriesApi.list,
   })
 
-  const { data: groupsList } = useQuery({
+  const { data: groupsList, isLoading: groupsLoading } = useQuery({
     queryKey: ['category-groups'],
     queryFn: groupsApi.list,
   })
@@ -195,6 +196,7 @@ export default function BudgetsPage() {
         }
       />
 
+      <SkeletonSurface pageKey="budgets" loading={budgetsLoading || categoriesLoading || groupsLoading}>
       <SectionCard>
         <SectionHeader
           title={t('budgets.title')}
@@ -292,6 +294,7 @@ export default function BudgetsPage() {
           <p className="text-sm text-muted-foreground text-center py-10">{t('budgets.empty')}</p>
         )}
       </SectionCard>
+      </SkeletonSurface>
 
       <Dialog open={dialogOpen} onOpenChange={() => { setDialogOpen(false); setEditing(null) }}>
         <DialogContent>

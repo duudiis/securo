@@ -29,6 +29,7 @@ import {
 import { ICON_MAP } from '@/lib/category-icons'
 import { IconPicker } from '@/components/icon-picker'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -153,7 +154,7 @@ export default function GoalsPage() {
   const [selectedColor, setSelectedColor] = useState('#3B82F6')
   const [targetDate, setTargetDate] = useState('')
 
-  const { data: goalsList } = useQuery({
+  const { data: goalsList, isLoading } = useQuery({
     queryKey: ['goals', statusFilter],
     queryFn: () => goalsApi.list(statusFilter || undefined),
   })
@@ -258,6 +259,7 @@ export default function GoalsPage() {
         ))}
       </div>
 
+      <SkeletonSurface pageKey="goals" loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('goals.title')}
@@ -413,6 +415,7 @@ export default function GoalsPage() {
           <p className="text-sm text-muted-foreground text-center py-10">{t('goals.empty')}</p>
         )}
       </SectionCard>
+      </SkeletonSurface>
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={() => { setDialogOpen(false); setEditing(null) }}>

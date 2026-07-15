@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { calculateRangeSelection } from '@/lib/selection-utils'
 import { Search, Star, Merge, Trash2, ArrowRight, ListFilter, X, Check } from 'lucide-react'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
@@ -452,15 +453,9 @@ export default function PayeesPage() {
       </div>
 
       {/* Table */}
+      <SkeletonSurface pageKey="payees" loading={isLoading}>
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
-        {isLoading ? (
-          <div className="p-6 space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
-          </div>
-        ) : (
-          <Table>
+        <Table>
             <TableHeader>
               <TableRow className="border-b border-border hover:bg-transparent">
                  {canWrite && (
@@ -562,8 +557,8 @@ export default function PayeesPage() {
               )}
             </TableBody>
           </Table>
-        )}
       </div>
+      </SkeletonSurface>
 
       {/* Summary panel */}
       {summaryPayee && (

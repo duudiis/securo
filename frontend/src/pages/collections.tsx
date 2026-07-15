@@ -5,10 +5,10 @@ import { toast } from 'sonner'
 import { collections as collectionsApi, accounts as accountsApi, assetGroups as assetGroupsApi } from '@/lib/api'
 import { getAccountName } from '@/lib/account-utils'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
@@ -82,10 +82,9 @@ export default function CollectionsPage() {
       />
       <p className="text-sm text-muted-foreground mb-5 max-w-2xl">{t('collections.subtitle')}</p>
 
+      <SkeletonSurface pageKey="collections" loading={isLoading}>
       <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
-        {isLoading ? (
-          <div className="p-4 space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
-        ) : list.length === 0 ? (
+        {list.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <FolderOpen size={32} className="mb-3 opacity-40" />
             <p className="text-sm">{t('collections.empty')}</p>
@@ -119,6 +118,7 @@ export default function CollectionsPage() {
           </div>
         )}
       </div>
+      </SkeletonSurface>
 
       <CollectionDialog
         open={dialogOpen}

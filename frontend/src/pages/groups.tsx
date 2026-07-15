@@ -8,7 +8,6 @@ import { groups as groupsApi, type GroupCreatePayload } from '@/lib/api'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
@@ -18,6 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { GroupForm } from '@/components/group-form'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { Archive, ChevronRight, Trash2, Users } from 'lucide-react'
 import type { Group, GroupKind } from '@/types'
 
@@ -153,14 +153,9 @@ export default function GroupsPage() {
         ))}
       </div>
 
+      <SkeletonSurface pageKey="groups" loading={isLoading}>
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
-        {isLoading ? (
-          <div className="p-6 space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
-          </div>
-        ) : visibleGroups.length === 0 ? (
+        {visibleGroups.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <Users size={32} className="mx-auto mb-2 opacity-50" />
             <p>{t('splitGroups.empty')}</p>
@@ -222,6 +217,7 @@ export default function GroupsPage() {
           </ul>
         )}
       </div>
+      </SkeletonSurface>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">

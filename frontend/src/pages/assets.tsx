@@ -50,6 +50,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -400,7 +401,7 @@ export default function AssetsPage() {
     onError: (e) => toast.error(assetErrorMessage(e, t('common.error'))),
   })
 
-  const { data: rawWalletsList } = useQuery({
+  const { data: rawWalletsList, isLoading: walletsLoading } = useQuery({
     queryKey: ['asset-groups'],
     queryFn: () => assetGroups.list(),
   })
@@ -1077,11 +1078,7 @@ export default function AssetsPage() {
         />
       )}
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
-        </div>
-      ) : (
+      <SkeletonSurface pageKey="assets" loading={isLoading || walletsLoading}>
         <div className="space-y-6">
           {/* Wallets (active assets grouped) */}
           {(sortedWallets.length > 0 || ungroupedAssets.length > 0) && (
@@ -1116,7 +1113,7 @@ export default function AssetsPage() {
             </div>
           )}
         </div>
-      )}
+      </SkeletonSurface>
       </>
       )}
 

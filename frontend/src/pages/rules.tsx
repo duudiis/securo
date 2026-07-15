@@ -16,6 +16,7 @@ import type { Category, Payee, Rule, RuleAction, RuleCondition, RuleExportPayloa
 import { Trash2, Plus, RefreshCw, Package, Check, ArrowUpDown, ArrowUp, ArrowDown, Download, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { RuleDialog } from '@/components/rule-dialog'
 
@@ -137,7 +138,7 @@ export default function RulesPage() {
     setDialogOpen(true)
   }
 
-  const { data: rulesList } = useQuery({
+  const { data: rulesList, isLoading } = useQuery({
     queryKey: ['rules'],
     queryFn: rulesApi.list,
   })
@@ -295,6 +296,7 @@ export default function RulesPage() {
     <div>
       <PageHeader section={t('rules.section')} title={t('nav.rules')} />
 
+      <SkeletonSurface pageKey="rules" loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('rules.sectionTitle')}
@@ -431,6 +433,7 @@ export default function RulesPage() {
           <p className="text-sm text-muted-foreground text-center py-10">{t('rules.empty')}</p>
         )}
       </SectionCard>
+      </SkeletonSurface>
 
       <RulePacksDialog
         open={packsDialogOpen}

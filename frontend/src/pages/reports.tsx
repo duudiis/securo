@@ -31,6 +31,7 @@ import type { ReportResponse, CategoryTrendItem, ReportDataPoint } from '@/types
 import { useToggleSet } from '@/hooks/use-toggle-set'
 import { buildCategoryGroupIndex, type GroupBucket } from '@/lib/category-groups'
 import { DateRangeFilter } from '@/components/date-range-filter'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { usePageDateFilter } from '@/hooks/use-page-date-filter'
 import { resolveDateRange, type DateFilterValue } from '@/lib/date-filter'
 
@@ -733,6 +734,9 @@ export default function ReportsPage() {
         ))}
       </div>
 
+      {/* Per-tab surface: each tab remembers its own layout geometry, and
+          switching to a cached tab renders instantly with no fade. */}
+      <SkeletonSurface key={activeTab} pageKey={`reports.${activeTab}`} loading={isLoading}>
       {/* Hero Card */}
       <div className="bg-card rounded-xl border border-border shadow-sm mb-5">
         <div className="px-5 py-4">
@@ -1666,6 +1670,7 @@ export default function ReportsPage() {
       </div>
       </>
       )}
+      </SkeletonSurface>
     </div>
   )
 }

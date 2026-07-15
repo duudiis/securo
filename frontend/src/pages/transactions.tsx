@@ -5,6 +5,7 @@ import { AccountIcon } from '@/components/account-icon'
 import { currentMonth, monthRange, monthFromRange } from '@/lib/month-utils'
 import { resolveDateRange, type DateFilterValue } from '@/lib/date-filter'
 import { usePageDateFilter } from '@/hooks/use-page-date-filter'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
@@ -35,7 +36,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
 import { AlertTriangle, ArrowLeftRight, ArrowUp, ArrowDown, Check, Copy, HelpCircle, Info, Paperclip, Users, X, EyeClosed, SlidersHorizontal } from 'lucide-react'
 import type { Transaction, Rule } from '@/types'
 import { RuleDialog, type RuleDialogInitialData } from '@/components/rule-dialog'
@@ -1288,13 +1288,7 @@ export default function TransactionsPage() {
 
       {/* Table */}
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
-        {isLoading ? (
-          <div className="p-6 space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
-          </div>
-        ) : (
+        <SkeletonSurface pageKey="transactions" loading={!data}>
           <div className="overflow-x-auto">
           <Table style={{ tableLayout: 'fixed' }}>
             <TableHeader>
@@ -1362,7 +1356,7 @@ export default function TransactionsPage() {
             </TableBody>
           </Table>
           </div>
-        )}
+        </SkeletonSurface>
         {/* Filtered summary (issue #185): income / expenses / net across
             ALL rows matching the active filters — not just this page. */}
         {!isLoading && data?.summary && filteredItems.length > 0 && (

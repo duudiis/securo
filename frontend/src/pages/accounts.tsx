@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/dialog'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import type { Account, BankConnection } from '@/types'
 import {
   Pencil,
@@ -37,6 +36,7 @@ import {
 } from 'lucide-react'
 import { AccountIcon, ConnectionLogo, getAccountTypeConfig } from '@/components/account-icon'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { ImportSection } from '@/pages/import'
 import { BankConnectDialog } from '@/components/bank-connect-dialog'
 import { ConnectorSelectDialog, type Provider } from '@/components/connector-select-dialog'
@@ -246,11 +246,7 @@ export default function AccountsPage() {
         }
       />
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
-        </div>
-      ) : (
+      <SkeletonSurface pageKey="accounts" loading={isLoading}>
         <div className="space-y-6">
           {/* Manual accounts — same presentation as connected ones, just
               without a connection header (no special labeled box). */}
@@ -528,7 +524,7 @@ export default function AccountsPage() {
               the page's space-y-6 rhythm applies, no extra padding. */}
           <ImportSection />
         </div>
-      )}
+      </SkeletonSurface>
 
       {/* Confirm delete dialog */}
       <Dialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>

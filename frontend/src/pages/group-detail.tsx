@@ -53,6 +53,7 @@ import {
 import { CategoryIcon } from '@/components/category-icon'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import type { GroupMember, GroupSettlement, Transaction } from '@/types'
 
 function formatCurrency(value: number, currency = 'USD', locale = 'en-US') {
@@ -598,16 +599,7 @@ export default function GroupDetailPage() {
     return entries.sort((a, b) => b.total - a.total)
   }, [categoryBreakdown, categoryGroupsList, categoriesList, expandedBreakdownGroups, t])
 
-  if (loadingGroup) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    )
-  }
-  if (!group) {
+  if (!group && !loadingGroup) {
     return <div className="text-muted-foreground">{t('splitGroups.notFound')}</div>
   }
 
@@ -615,7 +607,7 @@ export default function GroupDetailPage() {
     <div className="space-y-4">
       <PageHeader
         section={t('splitGroups.section')}
-        title={group.name}
+        title={group?.name ?? ''}
         action={
           <div className="flex items-center gap-2">
             {!isOwner && (
@@ -631,6 +623,8 @@ export default function GroupDetailPage() {
         }
       />
 
+      <SkeletonSurface pageKey="group-detail" loading={loadingGroup}>
+      <div className="space-y-4">
       {/* KPI row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <KpiCard
@@ -680,7 +674,7 @@ export default function GroupDetailPage() {
                   }}
                   formatter={(v) => formatCurrency(Number(v ?? 0), groupCurrency, locale)}
                 />
-                <Bar dataKey="total" fill={group.color} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="total" fill={group?.color} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -757,13 +751,13 @@ export default function GroupDetailPage() {
             ) : undefined
           }
         />
-        {group.members.length === 0 ? (
+        {(group?.members ?? []).length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
             {t('splitGroups.noMembers')}
           </div>
         ) : (
           <ul className="divide-y divide-border">
-            {group.members.map((member) => (
+            {(group?.members ?? []).map((member) => (
               <li key={member.id} className="flex items-center justify-between px-4 py-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -1010,6 +1004,8 @@ export default function GroupDetailPage() {
         )}
       </SectionCard>
       </div>
+      </div>
+      </SkeletonSurface>
 
       {/* Member dialog */}
       <Dialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen}>
@@ -1082,7 +1078,7 @@ export default function GroupDetailPage() {
                 }}
               >
                 <option value="">{t('splitGroups.selectMember')}</option>
-                {group.members.map((m) => (
+                {(group?.members ?? []).map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}
                   </option>
@@ -1097,7 +1093,7 @@ export default function GroupDetailPage() {
                 onChange={(e) => setSettleTo(e.target.value)}
               >
                 <option value="">{t('splitGroups.selectMember')}</option>
-                {group.members.map((m) => (
+                {(group?.members ?? []).map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}
                   </option>

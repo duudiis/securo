@@ -16,6 +16,7 @@ import {
 import type { Category, CategoryGroup } from '@/types'
 import { Pencil, Trash2, Plus, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { CategoryIcon } from '@/components/category-icon'
 import { IconPicker } from '@/components/icon-picker'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -55,12 +56,12 @@ export default function CategoriesPage() {
   const [groupFormColor, setGroupFormColor] = useState('#6B7280')
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
-  const { data: groups } = useQuery({
+  const { data: groups, isLoading: groupsLoading } = useQuery({
     queryKey: ['category-groups'],
     queryFn: groupsApi.list,
   })
 
-  const { data: categoriesList } = useQuery({
+  const { data: categoriesList, isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: categoriesApi.list,
   })
@@ -177,6 +178,7 @@ export default function CategoriesPage() {
     <div>
       <PageHeader section={t('categories.title')} title={t('categories.title')} />
 
+      <SkeletonSurface pageKey="categories" loading={groupsLoading || categoriesLoading}>
       <SectionCard>
         <SectionHeader
           title={t('categories.title')}
@@ -261,6 +263,7 @@ export default function CategoriesPage() {
           )}
         </div>
       </SectionCard>
+      </SkeletonSurface>
 
       {/* Category Dialog */}
       <Dialog open={catDialogOpen} onOpenChange={() => { setCatDialogOpen(false); setEditingCat(null) }}>

@@ -20,6 +20,7 @@ import type { Category, CategoryGroup, RecurringTransaction } from '@/types'
 import { Pencil, Trash2, Plus, RefreshCw, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
+import { SkeletonSurface } from '@/components/skeleton-surface'
 import { CategorySelect } from '@/components/category-select'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
@@ -72,7 +73,7 @@ function RecurringTab() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<RecurringTransaction | null>(null)
 
-  const { data: recurringList } = useQuery({
+  const { data: recurringList, isLoading } = useQuery({
     queryKey: ['recurring'],
     queryFn: recurringApi.list,
   })
@@ -142,6 +143,7 @@ function RecurringTab() {
 
   return (
     <>
+      <SkeletonSurface pageKey="recurring" loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('recurring.title')}
@@ -239,6 +241,7 @@ function RecurringTab() {
           <p className="text-sm text-muted-foreground text-center py-10">{t('recurring.empty')}</p>
         )}
       </SectionCard>
+      </SkeletonSurface>
 
       <Dialog open={dialogOpen} onOpenChange={() => { setDialogOpen(false); setEditing(null) }}>
         <DialogContent>
