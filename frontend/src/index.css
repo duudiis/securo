@@ -17,7 +17,8 @@
   --secondary: #F1F5F9;
   --secondary-foreground: #0F172A;
   --muted: #F1F5F9;
-  --muted-foreground: #64748B;
+  /* Darkened from #64748B — secondary text was too light on white (AA-borderline). */
+  --muted-foreground: #475569;
   --accent: #EEF2FF;
   --accent-foreground: #4F46E5;
   --destructive: #F43F5E;
@@ -39,38 +40,41 @@
   --sidebar-accent-foreground: #4F46E5;
   --sidebar-border: #E8ECF1;
   --sidebar-ring: #6366F1;
-  --sidebar-muted: #64748B;
+  --sidebar-muted: #475569;
 }
 
+/* Dark mode: neutral dark-gray surfaces (the old palette leaned blue —
+   hue ~230° on every surface). Brand indigo stays on primary/accent only;
+   muted text is lighter than before for readable secondary copy. */
 .dark {
-  --background: #0C0D12;
-  --foreground: #F0F0F5;
-  --card: #16171F;
-  --card-foreground: #F0F0F5;
-  --popover: #16171F;
-  --popover-foreground: #F0F0F5;
+  --background: #141414;
+  --foreground: #F4F4F5;
+  --card: #1E1E1E;
+  --card-foreground: #F4F4F5;
+  --popover: #1E1E1E;
+  --popover-foreground: #F4F4F5;
   --primary: #818CF8;
   --primary-foreground: #FFFFFF;
-  --secondary: #252836;
-  --secondary-foreground: #F0F0F5;
-  --muted: #252836;
-  --muted-foreground: #8A8F9E;
-  --accent: #1E1B4B;
+  --secondary: #2A2A2A;
+  --secondary-foreground: #F4F4F5;
+  --muted: #2A2A2A;
+  --muted-foreground: #A8ABB2;
+  --accent: #262638;
   --accent-foreground: #A5B4FC;
   --destructive: #FB7185;
-  --destructive-foreground: #0C0D12;
-  --border: #2A2D3A;
-  --input: #2A2D3A;
+  --destructive-foreground: #141414;
+  --border: #303030;
+  --input: #303030;
   --ring: #818CF8;
-  --sidebar: #16171F;
-  --sidebar-foreground: #F0F0F5;
+  --sidebar: #1E1E1E;
+  --sidebar-foreground: #F4F4F5;
   --sidebar-primary: #818CF8;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #252836;
+  --sidebar-accent: #2A2A2A;
   --sidebar-accent-foreground: #A5B4FC;
-  --sidebar-border: #2A2D3A;
+  --sidebar-border: #303030;
   --sidebar-ring: #818CF8;
-  --sidebar-muted: #8A8F9E;
+  --sidebar-muted: #A8ABB2;
 }
 
 @theme inline {
