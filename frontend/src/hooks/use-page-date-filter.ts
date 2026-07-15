@@ -39,8 +39,13 @@ export function usePageDateFilter(pageKey: string, defaultValue: DateFilterValue
   const value: DateFilterValue = local ?? saved ?? defaultValue
 
   const saveMutation = useMutation({
-    mutationFn: (next: DateFilterValue) =>
-      pageSettings.put(pageKey, { ...(data?.settings ?? {}), dateFilter: next }),
+    // Merge against the freshest cached settings at call time so concurrent
+    // writers of other keys (e.g. the transactions filter snapshot) aren't
+    // clobbered by a stale closure.
+    mutationFn: (next: DateFilterValue) => {
+      const cur = queryClient.getQueryData<PageSettingPayload>(['page-settings', pageKey])?.settings ?? {}
+      return pageSettings.put(pageKey, { ...cur, dateFilter: next })
+    },
     onSuccess: (resp: PageSettingPayload) => {
       queryClient.setQueryData(['page-settings', pageKey], resp)
     },

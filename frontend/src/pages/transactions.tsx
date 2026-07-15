@@ -5,12 +5,11 @@ import { AccountIcon } from '@/components/account-icon'
 import { currentMonth, monthRange, monthFromRange } from '@/lib/month-utils'
 import { resolveDateRange, type DateFilterValue } from '@/lib/date-filter'
 import { usePageDateFilter } from '@/hooks/use-page-date-filter'
-import { MonthStepper } from '@/components/month-stepper'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { transactions, categories as categoriesApi, categoryGroups as categoryGroupsApi, accounts as accountsApi, recurring, payees as payeesApi, admin, groups as groupsApi, rules as rulesApi } from '@/lib/api'
+import { transactions, categories as categoriesApi, categoryGroups as categoryGroupsApi, accounts as accountsApi, recurring, payees as payeesApi, admin, groups as groupsApi, rules as rulesApi, pageSettings as pageSettingsApi } from '@/lib/api'
 import { invalidateFinancialQueries } from '@/lib/invalidate-queries'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -37,13 +36,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertTriangle, ArrowLeftRight, ArrowUp, ArrowDown, Check, Copy, Download, HelpCircle, Info, MoreHorizontal, Paperclip, Users, X, EyeClosed, SlidersHorizontal } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { AlertTriangle, ArrowLeftRight, ArrowUp, ArrowDown, Check, Copy, HelpCircle, Info, Paperclip, Users, X, EyeClosed, SlidersHorizontal } from 'lucide-react'
 import type { Transaction, Rule } from '@/types'
 import { RuleDialog, type RuleDialogInitialData } from '@/components/rule-dialog'
 import { PageHeader } from '@/components/page-header'
@@ -51,9 +44,7 @@ import { calculateRangeSelection } from '@/lib/selection-utils'
 import { CategoryIcon } from '@/components/category-icon'
 import { CategorySelect } from '@/components/category-select'
 import { TransactionDialog, extractApiError, type SaveAction } from '@/components/transaction-dialog'
-import { TransactionsColumnPicker } from '@/components/transactions-column-picker'
 import { type ColumnDef, type ColumnId, useTransactionsGridState } from '@/components/transactions-grid-columns'
-import { TransferDialog } from '@/components/transfer-dialog'
 import { LinkTransferDialog } from '@/components/link-transfer-dialog'
 import { BulkAddToGroupDialog, type BulkAddToGroupSubmission } from '@/components/bulk-add-to-group-dialog'
 import { TransactionsFilterBar } from '@/components/transactions-filter-bar'
@@ -132,9 +123,14 @@ export default function TransactionsPage() {
     return m ? { mode: 'month', month: m } : { mode: 'custom', from: f ?? '', to: t ?? '' }
   })
   const pageDateFilter = usePageDateFilter('transactions', { mode: 'month', month: currentMonth() })
-  const urlHadRangeRef = useRef(!!(searchParams.get('from') || searchParams.get('to')))
+  // Params that mean the link carries explicit filter state (deep link/share) —
+  // those win over the cloud-saved snapshot.
+  const FILTER_URL_KEYS = ['from', 'to', 'q', 'tags', 'payee_id', 'group_id', 'type', 'category_id', 'uncategorized', 'account_id', 'min_amount', 'max_amount']
+  const urlHadFiltersRef = useRef(FILTER_URL_KEYS.some((k) => searchParams.get(k)))
   const userTouchedDateRef = useRef(false)
-  const cloudRestoredRef = useRef(false)
+  // Flips once the cloud snapshot has been applied (or deliberately skipped);
+  // the list query waits for it so the first fetch uses the restored filters.
+  const [filtersRestored, setFiltersRestored] = useState(false)
   const applyDateValue = (v: DateFilterValue, opts?: { persist?: boolean }) => {
     setDateValue(v)
     const r = resolveDateRange(v)
@@ -145,24 +141,6 @@ export default function TransactionsPage() {
       userTouchedDateRef.current = true
       pageDateFilter.setValue(v)
     }
-  }
-  // Restore the cloud-saved filter once per mount. Deep links (?from/?to) and
-  // anything the user already picked this session take precedence.
-  useEffect(() => {
-    if (!pageDateFilter.isLoaded || cloudRestoredRef.current) return
-    cloudRestoredRef.current = true
-    if (urlHadRangeRef.current || userTouchedDateRef.current) return
-    const v = pageDateFilter.value
-    setDateValue(v)
-    const r = resolveDateRange(v)
-    setFilterFrom(r.from)
-    setFilterTo(r.to)
-  }, [pageDateFilter.isLoaded, pageDateFilter.value])
-  // Month reflected by the stepper: the active range when it spans exactly one
-  // full month, otherwise the current month (custom ranges still navigable).
-  const steppedMonth = monthFromRange(filterFrom, filterTo) ?? currentMonth()
-  const handleMonthChange = (ym: string) => {
-    applyDateValue({ mode: 'month', month: ym })
   }
   const [searchInput, setSearchInput] = useState(() => searchParams.get('q') ?? '')
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
@@ -178,6 +156,82 @@ export default function TransactionsPage() {
   const [filterMinAmount, setFilterMinAmount] = useState<string>(searchParams.get('min_amount') ?? '')
   const [filterMaxAmount, setFilterMaxAmount] = useState<string>(searchParams.get('max_amount') ?? '')
   const [tagFilters, setTagFilters] = useState<string[]>([])
+
+  // Restore the cloud-saved filters once per mount. Deep links and anything
+  // the user already picked this session take precedence.
+  useEffect(() => {
+    if (!pageDateFilter.isLoaded || filtersRestored) return
+    setFiltersRestored(true)
+    const saved = queryClient.getQueryData<{ settings?: Record<string, unknown> }>(['page-settings', 'transactions'])?.settings
+    if (urlHadFiltersRef.current) {
+      // URL wins — but if its range is exactly the saved symbolic pick's
+      // window (the URL is self-written on every visit), adopt the symbolic
+      // value so "Last 30 days" is displayed as such, not as raw dates.
+      if (!userTouchedDateRef.current && pageDateFilter.value) {
+        const r = resolveDateRange(pageDateFilter.value)
+        if (r.from === (searchParams.get('from') ?? '') && r.to === (searchParams.get('to') ?? '')) {
+          setDateValue(pageDateFilter.value)
+        }
+      }
+      return
+    }
+    if (!userTouchedDateRef.current) {
+      const v = pageDateFilter.value
+      setDateValue(v)
+      const r = resolveDateRange(v)
+      setFilterFrom(r.from)
+      setFilterTo(r.to)
+    }
+    const f = saved?.filters as Record<string, unknown> | undefined
+    if (f) {
+      const strArr = (x: unknown) => (Array.isArray(x) ? x.filter((i): i is string => typeof i === 'string') : [])
+      const str = (x: unknown) => (typeof x === 'string' ? x : '')
+      setFilterAccountIds(strArr(f.account_ids))
+      setFilterCategoryIds(strArr(f.category_ids))
+      setFilterUncategorized(f.uncategorized === true)
+      setFilterPayee(str(f.payee_id))
+      setFilterGroupId(str(f.group_id))
+      setFilterType(str(f.type))
+      setFilterMinAmount(str(f.min_amount))
+      setFilterMaxAmount(str(f.max_amount))
+      setTagFilters(strArr(f.tags))
+      setSearchInput(str(f.q))
+      setSearchQuery(str(f.q))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageDateFilter.isLoaded, filtersRestored])
+
+  // Persist the non-date filters (debounced) so the page reopens exactly as
+  // left. The date filter saves through its own hook; both merge against the
+  // freshest cached settings, so neither clobbers the other.
+  const saveFiltersMutation = useMutation({
+    mutationFn: (filters: Record<string, unknown>) => {
+      const cur = queryClient.getQueryData<{ settings?: Record<string, unknown> }>(['page-settings', 'transactions'])?.settings ?? {}
+      return pageSettingsApi.put('transactions', { ...cur, filters })
+    },
+    onSuccess: (resp) => queryClient.setQueryData(['page-settings', 'transactions'], resp),
+  })
+  const saveFiltersRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (!filtersRestored) return
+    if (saveFiltersRef.current) clearTimeout(saveFiltersRef.current)
+    saveFiltersRef.current = setTimeout(() => {
+      saveFiltersMutation.mutate({
+        account_ids: filterAccountIds,
+        category_ids: filterCategoryIds,
+        uncategorized: filterUncategorized,
+        payee_id: filterPayee,
+        group_id: filterGroupId,
+        type: filterType,
+        min_amount: filterMinAmount,
+        max_amount: filterMaxAmount,
+        tags: tagFilters,
+        q: searchQuery,
+      })
+    }, 600)
+    return () => { if (saveFiltersRef.current) clearTimeout(saveFiltersRef.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersRestored, filterAccountIds, filterCategoryIds, filterUncategorized, filterPayee, filterGroupId, filterType, filterMinAmount, filterMaxAmount, tagFilters, searchQuery])
 
   // When the page is opened with a `group_id`, fetch its name so the
   // active-filter chip is recognizable rather than a raw uuid.
@@ -212,8 +266,6 @@ export default function TransactionsPage() {
     setTagFilters([])
     setPage(1)
   }
-  const [exporting, setExporting] = useState(false)
-  const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [linkTransferDialogOpen, setLinkTransferDialogOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null)
@@ -373,7 +425,7 @@ export default function TransactionsPage() {
     queryKey: ['transactions', page, limit, effectiveAccountIds, filterCategoryIds, filterUncategorized, filterPayee, filterGroupId, filterType, filterFrom, filterTo, filterMinAmount, filterMaxAmount, searchQuery, tagFilters, grid.sortBy, grid.sortDir],
     // Wait for the cloud-saved date filter before the first fetch (deep links
     // with an explicit range don't need to).
-    enabled: !noAccounts && (pageDateFilter.isLoaded || urlHadRangeRef.current),
+    enabled: !noAccounts && (filtersRestored || urlHadFiltersRef.current),
     queryFn: () =>
       transactions.list({
         page,
@@ -624,25 +676,6 @@ export default function TransactionsPage() {
     },
   })
 
-  const transferMutation = useMutation({
-    mutationFn: (data: {
-      from_account_id: string
-      to_account_id: string
-      amount: number
-      date: string
-      description: string
-      notes?: string
-      fx_rate?: number
-    }) => transactions.createTransfer(data),
-    onSuccess: () => {
-      invalidateAfterTxMutation()
-      setTransferDialogOpen(false)
-      toast.success(t('transactions.transferCreated'))
-    },
-    onError: (error) => {
-      toast.error(extractApiError(error))
-    },
-  })
 
   const createRuleMutation = useMutation({
     mutationFn: (data: Omit<Rule, 'id' | 'user_id'>) => rulesApi.create(data),
@@ -820,30 +853,6 @@ export default function TransactionsPage() {
     setDialogOpen(true)
   }
 
-  const handleExport = async () => {
-    setExporting(true)
-    try {
-      if (selectedIds.size > 0) {
-        // Selection-only export bypasses other filters and hits the
-        // backend's `transaction_ids` short-circuit.
-        await transactions.export({ transaction_ids: Array.from(selectedIds) })
-      } else {
-        await transactions.export({
-          account_ids: effectiveAccountIds.length > 0 ? effectiveAccountIds : undefined,
-          category_ids: filterCategoryIds.length > 0 ? filterCategoryIds : undefined,
-          uncategorized: filterUncategorized ? true : undefined,
-          from: filterFrom || undefined,
-          to: filterTo || undefined,
-          q: searchQuery || undefined,
-        })
-      }
-      toast.success(t('transactions.exportSuccess'))
-    } catch {
-      toast.error(t('transactions.exportError'))
-    } finally {
-      setExporting(false)
-    }
-  }
 
   // Resize: track which column is being dragged so we can clear listeners
   // when the gesture ends. The width is committed to grid state on every
@@ -1170,86 +1179,15 @@ export default function TransactionsPage() {
         section={t('transactions.section')}
         title={t('transactions.title')}
         action={
-          // Single row at every width: [month stepper] [+ Add Transaction] [⋯].
-          // The stepper is compact and shrinks first so all three fit on a
-          // phone (#257). On desktop the secondary actions (Columns, Export,
-          // Duplicate, Transfer) are inline labelled buttons; on mobile they
-          // collapse into the overflow menu so the row stays uncrowded.
-          <div className="flex items-center gap-2 sm:flex-wrap sm:justify-end">
-            <MonthStepper
-              value={steppedMonth}
-              onChange={handleMonthChange}
-              locale={dateLocale}
-              prevLabel={t('transactions.monthPrevious')}
-              nextLabel={t('transactions.monthNext')}
-            />
-
-            {/* Secondary actions: inline labelled buttons on desktop. */}
-            <div className="hidden sm:contents">
-              <TransactionsColumnPicker state={grid} />
-              <Button variant="outline" disabled={exporting} onClick={handleExport}>
-                <Download size={16} className="mr-1.5" />
-                {exporting
-                  ? t('transactions.exporting')
-                  : selectedIds.size > 0
-                    ? t('transactions.exportSelected', { count: selectedIds.size })
-                    : t('transactions.exportCsv')}
-              </Button>
-              {/* Duplicate (issue #158): single non-shared, non-transfer row
-                  selected. Pre-fills Add Transaction from its fields. */}
-              {duplicableTx && (
-                <Button variant="outline" onClick={() => handleDuplicateTransaction(duplicableTx)}>
-                  <Copy size={16} className="mr-1.5" />
-                  {t('transactions.duplicate')}
-                </Button>
-              )}
-              {canWrite && (
-                <Button variant="outline" onClick={() => setTransferDialogOpen(true)}>
-                  <ArrowLeftRight size={16} className="mr-1.5" />
-                  {t('transactions.transfer')}
-                </Button>
-              )}
-            </div>
-
-            {/* Primary action: present at every width. */}
-            {canWrite && (
-              <Button onClick={() => { setEditingTx(null); setDialogOpen(true) }}>
-                + {t('transactions.addManual')}
-              </Button>
-            )}
-
-            {/* Secondary actions: overflow menu on mobile only. */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="!size-9 sm:hidden"
-                  aria-label={t('common.more')}
-                >
-                  <MoreHorizontal size={18} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem disabled={exporting} onClick={handleExport}>
-                  <Download size={16} className="mr-2" />
-                  {t('transactions.exportCsv')}
-                </DropdownMenuItem>
-                {duplicableTx && (
-                  <DropdownMenuItem onClick={() => handleDuplicateTransaction(duplicableTx)}>
-                    <Copy size={16} className="mr-2" />
-                    {t('transactions.duplicate')}
-                  </DropdownMenuItem>
-                )}
-                {canWrite && (
-                  <DropdownMenuItem onClick={() => setTransferDialogOpen(true)}>
-                    <ArrowLeftRight size={16} className="mr-2" />
-                    {t('transactions.transfer')}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          // Header intentionally minimal — filtering lives in the filter bar
+          // and Add/Export are reachable via the command palette / bulk bar.
+          // Duplicate stays: it's contextual to a single selected row.
+          duplicableTx ? (
+            <Button variant="outline" onClick={() => handleDuplicateTransaction(duplicableTx)}>
+              <Copy size={16} className="mr-1.5" />
+              {t('transactions.duplicate')}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -1713,13 +1651,6 @@ export default function TransactionsPage() {
       />
 
       {/* Transfer Dialog */}
-      <TransferDialog
-        open={transferDialogOpen}
-        onClose={() => setTransferDialogOpen(false)}
-        accounts={accountsList ?? []}
-        onSave={(data) => transferMutation.mutate(data)}
-        loading={transferMutation.isPending}
-      />
 
       {/* Add/Edit Dialog */}
       <TransactionDialog

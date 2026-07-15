@@ -168,6 +168,7 @@ export function TransactionsFilterBar({
     !!filterType ||
     !!filterMinAmount ||
     !!filterMaxAmount ||
+    dateFilterValue.mode !== 'all' ||
     searchInput.trim().length > 0
 
   const typeLabel =
