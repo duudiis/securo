@@ -83,7 +83,10 @@ export function CategorySelect({
   }
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    // modal: when this picker opens inside a Dialog (transaction/rule/recurring
+    // forms), the dialog's scroll lock otherwise swallows wheel events over the
+    // portaled list — modal mounts the popover in its own scroll-lock shard.
+    <Popover open={open} onOpenChange={handleOpenChange} modal>
       <PopoverTrigger asChild>
         <button
           type="button"

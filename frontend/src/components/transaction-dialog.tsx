@@ -1259,7 +1259,9 @@ function AddTransactionToRuleDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>{t('transactions.existingRule')}</Label>
-            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+            {/* modal: inside this dialog the scroll lock otherwise swallows
+                wheel events over the portaled rule list */}
+            <Popover open={openCombobox} onOpenChange={setOpenCombobox} modal>
               <PopoverTrigger asChild>
                 <button
                   type="button"
