@@ -18,8 +18,8 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from 'recharts'
-import { HelpCircle, X } from 'lucide-react'
-import { reports } from '@/lib/api'
+import { ChevronDown, ChevronRight, HelpCircle, X } from 'lucide-react'
+import { categories as categoriesApi, categoryGroups as categoryGroupsApi, reports } from '@/lib/api'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { PageHeader } from '@/components/page-header'
@@ -27,7 +27,9 @@ import { CashflowSankey } from '@/components/reports/CashflowSankey'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
 import { useCollectionFilter } from '@/contexts/collection-filter-context'
-import type { ReportResponse, CategoryTrendItem } from '@/types'
+import type { ReportResponse, CategoryTrendItem, ReportDataPoint } from '@/types'
+import { useToggleSet } from '@/hooks/use-toggle-set'
+import { buildCategoryGroupIndex, type GroupBucket } from '@/lib/category-groups'
 
 // A small qualitative palette of well-separated hues for the composition
 // detail ring. Capped to a handful of slices, distinct colours make each
@@ -60,6 +62,18 @@ function formatCompact(value: number, currency = 'USD', locale = 'en-US') {
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format(value)
+}
+
+// Element-wise sum of several trend series, keyed by date (series from the
+// same report share the interval, but a map keeps this safe regardless).
+function sumTrendSeries(seriesList: ReportDataPoint[][]): ReportDataPoint[] {
+  const byDate = new Map<string, number>()
+  for (const series of seriesList) {
+    for (const p of series) byDate.set(p.date, (byDate.get(p.date) ?? 0) + p.value)
+  }
+  return [...byDate.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, value]) => ({ date, value, breakdowns: {}, change: null }))
 }
 
 
@@ -206,6 +220,20 @@ export default function ReportsPage() {
           : reports.netWorth(months, interval, acctIds, walletIds, period),
     enabled: currentTab.enabled && !(noAccounts && activeTab !== 'net_worth'),
   })
+
+  // Category-group rollup: composition/trend keys are category UUIDs on the
+  // income-expenses and cash-flow reports, mapped to their group client-side.
+  const { data: categoriesList } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoriesApi.list,
+  })
+  const { data: categoryGroupsList } = useQuery({
+    queryKey: ['categoryGroups'],
+    queryFn: categoryGroupsApi.list,
+  })
+  const [expandedCatGroups, toggleCatGroup] = useToggleSet()
+  const groupIndex = buildCategoryGroupIndex(categoryGroupsList, categoriesList)
+  const isCategoryReport = activeTab === 'income_expenses' || activeTab === 'cash_flow' || isMoneyMap
 
   const summary = data?.summary
   const trend = data?.trend ?? []
@@ -384,6 +412,7 @@ export default function ReportsPage() {
         value: c.value,
         color: activeTab === 'net_worth' ? (netWorthColorMap.get(c.key) ?? OTHER_SLICE_COLOR) : c.color,
         group: c.group,
+        key: c.key,
       }))
   })()
 
@@ -420,21 +449,67 @@ export default function ReportsPage() {
               : g === 'expenses' ? t('reports.otherExpenses')
                 : t('reports.other')
 
-    const byGroup = new Map<string, typeof compositionDetail>()
-    for (const g of innerGroups) byGroup.set(g, [])
-    for (const item of compositionDetail) byGroup.get(item.group)?.push(item)
-
-    const result: {
+    type DonutSlice = {
       name: string
       value: number
       color: string
+      group: string
+      key?: string
+      /** Set on a collapsed category-group slice — clicking expands it. */
+      groupId?: string
+      /** Set on slices of an expanded group — clicking collapses it back. */
+      memberOfGroupId?: string
       children?: { name: string; value: number; color: string }[]
-    }[] = []
+    }
+
+    const byGroup = new Map<string, DonutSlice[]>()
+    for (const g of innerGroups) byGroup.set(g, [])
+    for (const item of compositionDetail) byGroup.get(item.group)?.push(item)
+
+    // Fold the category slices of one high-level bucket into category-group
+    // slices; expanded groups contribute their member categories directly.
+    // Pseudo-items (uncategorized/baseline/other) pass through untouched.
+    const rollupCategorySlices = (items: DonutSlice[]): DonutSlice[] => {
+      const byBucket = new Map<string, { bucket: GroupBucket; members: DonutSlice[] }>()
+      const out: DonutSlice[] = []
+      for (const item of items) {
+        const bucket = item.key ? groupIndex.bucketByCategoryId.get(item.key) : undefined
+        if (!bucket) {
+          out.push(item)
+          continue
+        }
+        let entry = byBucket.get(bucket.id)
+        if (!entry) {
+          entry = { bucket, members: [] }
+          byBucket.set(bucket.id, entry)
+        }
+        entry.members.push(item)
+      }
+      for (const { bucket, members } of byBucket.values()) {
+        if (expandedCatGroups.has(bucket.id)) {
+          out.push(...members.map((m) => ({ ...m, memberOfGroupId: bucket.id })))
+        } else {
+          out.push({
+            name: bucket.isUngrouped ? t('groups.noGroup') : bucket.name,
+            value: members.reduce((s, m) => s + m.value, 0),
+            color: bucket.color,
+            group: members[0].group,
+            key: `catgroup-${bucket.id}`,
+            groupId: bucket.id,
+            children: members,
+          })
+        }
+      }
+      return out.sort((a, b) => b.value - a.value)
+    }
+
+    const result: DonutSlice[] = []
 
     for (const g of innerGroups) {
-      const all = byGroup.get(g) ?? []
-      const significant = all.filter((item) => totalValue > 0 && item.value / totalValue >= 0.03)
-      const rest = all.filter((item) => totalValue <= 0 || item.value / totalValue < 0.03)
+      const all = isCategoryReport ? rollupCategorySlices(byGroup.get(g) ?? []) : (byGroup.get(g) ?? [])
+      // Members of an explicitly expanded group always keep their own slice.
+      const significant = all.filter((item) => item.memberOfGroupId || (totalValue > 0 && item.value / totalValue >= 0.03))
+      const rest = all.filter((item) => !item.memberOfGroupId && (totalValue <= 0 || item.value / totalValue < 0.03))
       const topSum = significant.reduce((s, d) => s + d.value, 0)
       const innerTotal = innerGroupValue.get(g) ?? topSum
       const otherValue = Math.round((innerTotal - topSum) * 100) / 100
@@ -447,13 +522,73 @@ export default function ReportsPage() {
             name: otherLabel(g),
             value: otherValue,
             color: OTHER_SLICE_COLOR,
+            group: g,
             children: rest.length > 0 ? rest : undefined,
           })
         }
       }
     }
 
+    // The same category group can hold both income and expense categories, in
+    // which case it appears once per bucket — qualify the label so the two
+    // same-named, same-colored slices stay distinguishable.
+    const groupSliceCount = new Map<string, number>()
+    for (const s of result) {
+      if (s.groupId) groupSliceCount.set(s.groupId, (groupSliceCount.get(s.groupId) ?? 0) + 1)
+    }
+    for (const s of result) {
+      if (s.groupId && (groupSliceCount.get(s.groupId) ?? 0) > 1) {
+        const qualifier = s.group === 'income' ? t('reports.income')
+          : s.group === 'expenses' ? t('reports.expenses')
+            : s.group === 'investments' ? t('reports.investments', { defaultValue: 'Investments' })
+              : null
+        if (qualifier) s.name = `${s.name} · ${qualifier}`
+      }
+    }
+
     return result
+  })()
+
+  // Category trend tiles rolled up by category group: one tile per group
+  // (series summed element-wise); expanding a group swaps in its member
+  // category tiles. Pseudo-items (uncategorized/other) stay standalone.
+  type SparkTile = CategoryTrendItem & { groupId?: string; memberOfGroupId?: string; count?: number }
+  const sparklineTiles: SparkTile[] = (() => {
+    if (meta?.type !== 'income_expenses') return []
+    const groupKey = sparklineView === 'byIncome' ? 'income' : 'expenses'
+    const items = (data?.category_trend ?? []).filter((c) => c.group === groupKey)
+    const byBucket = new Map<string, { bucket: GroupBucket; members: CategoryTrendItem[] }>()
+    const out: SparkTile[] = []
+    for (const item of items) {
+      const bucket = groupIndex.bucketByCategoryId.get(item.key)
+      if (!bucket) {
+        out.push(item)
+        continue
+      }
+      let entry = byBucket.get(bucket.id)
+      if (!entry) {
+        entry = { bucket, members: [] }
+        byBucket.set(bucket.id, entry)
+      }
+      entry.members.push(item)
+    }
+    for (const { bucket, members } of byBucket.values()) {
+      if (expandedCatGroups.has(bucket.id)) {
+        out.push(...members.map((m) => ({ ...m, memberOfGroupId: bucket.id })))
+      } else {
+        out.push({
+          key: `catgroup-${bucket.id}`,
+          label: bucket.isUngrouped ? t('groups.noGroup') : bucket.name,
+          color: bucket.color,
+          total: members.reduce((s, m) => s + m.total, 0),
+          group: groupKey,
+          series: sumTrendSeries(members.map((m) => m.series)),
+          groupId: bucket.id,
+          count: members.length,
+        })
+      }
+    }
+    return out.sort((a, b) => b.total - a.total)
   })()
 
   return (
@@ -1017,9 +1152,17 @@ export default function ReportsPage() {
                                 stroke="var(--card)"
                                 strokeWidth={2}
                               >
-                                {outerDonutData.map((entry, idx) => (
-                                  <Cell key={idx} fill={entry.color} />
-                                ))}
+                                {outerDonutData.map((entry, idx) => {
+                                  const toggleId = entry.groupId ?? entry.memberOfGroupId
+                                  return (
+                                    <Cell
+                                      key={idx}
+                                      fill={entry.color}
+                                      cursor={toggleId ? 'pointer' : undefined}
+                                      onClick={toggleId ? () => toggleCatGroup(toggleId) : undefined}
+                                    />
+                                  )
+                                })}
                               </Pie>
                             )}
                             <Tooltip
@@ -1107,14 +1250,35 @@ export default function ReportsPage() {
                           const hiddenCount = compositionDetail.length - visible.length
                           return (
                             <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 items-center">
-                              {visible.map((d, i) => (
-                                <div key={`${i}-${d.name}`} className="flex items-center gap-1.5">
-                                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                                    {d.name.length > 30 ? d.name.slice(0, 27) + '…' : d.name}
-                                  </span>
-                                </div>
-                              ))}
+                              {visible.map((d, i) => {
+                                const toggleId = d.groupId ?? d.memberOfGroupId
+                                const label = (
+                                  <>
+                                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                                    <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                                      {d.name.length > 30 ? d.name.slice(0, 27) + '…' : d.name}
+                                    </span>
+                                  </>
+                                )
+                                return toggleId ? (
+                                  <button
+                                    key={`${i}-${d.name}`}
+                                    type="button"
+                                    onClick={() => toggleCatGroup(toggleId)}
+                                    className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
+                                    aria-expanded={!!d.memberOfGroupId}
+                                  >
+                                    {label}
+                                    {d.groupId
+                                      ? <ChevronRight size={10} className="text-muted-foreground shrink-0" />
+                                      : <ChevronDown size={10} className="text-muted-foreground shrink-0" />}
+                                  </button>
+                                ) : (
+                                  <div key={`${i}-${d.name}`} className="flex items-center gap-1.5">
+                                    {label}
+                                  </div>
+                                )
+                              })}
                               {hiddenCount > 0 && (
                                 <Popover>
                                   <PopoverTrigger asChild>
@@ -1185,9 +1349,7 @@ export default function ReportsPage() {
               )}
             </div>
             {meta?.type === 'income_expenses' && (() => {
-              const groupKey = sparklineView === 'byIncome' ? 'income' : 'expenses'
-              const allItems = (data?.category_trend ?? []).filter((c) => c.group === groupKey)
-              const totalPages = Math.ceil(allItems.length / 6)
+              const totalPages = Math.ceil(sparklineTiles.length / 6)
               const hasPagination = totalPages > 1
               return (
                 <div className="flex items-center gap-2">
@@ -1237,26 +1399,23 @@ export default function ReportsPage() {
                   ))}
                 </div>
               ) : (() => {
-                const groupKey = sparklineView === 'byIncome' ? 'income' : 'expenses'
-                const allGroupItems: CategoryTrendItem[] = (data?.category_trend ?? []).filter(
-                  (c) => c.group === groupKey
-                )
-                if (allGroupItems.length === 0) {
+                if (sparklineTiles.length === 0) {
                   return (
                     <p className="text-muted-foreground text-sm text-center py-16">
                       {t('reports.noData')}
                     </p>
                   )
                 }
-                const totalPages = Math.ceil(allGroupItems.length / 6)
+                const totalPages = Math.ceil(sparklineTiles.length / 6)
+                const effectivePage = Math.min(sparklinePage, totalPages - 1)
                 const pages = Array.from({ length: totalPages }, (_, i) =>
-                  allGroupItems.slice(i * 6, i * 6 + 6)
+                  sparklineTiles.slice(i * 6, i * 6 + 6)
                 )
                 return (
                   <div
                     className="flex"
                     style={{
-                      transform: `translateX(-${sparklinePage * 100}%)`,
+                      transform: `translateX(-${effectivePage * 100}%)`,
                       transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
@@ -1268,10 +1427,13 @@ export default function ReportsPage() {
                         {pageItems.map((item) => {
                           const sparkData = item.series.map((s) => ({ date: s.date, v: s.value }))
                           const gradId = `grad-${item.key}-${item.group}-p${pageIdx}`
+                          const toggleId = item.groupId ?? item.memberOfGroupId
                           return (
                             <div
                               key={`${item.key}-${item.group}`}
-                              className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2"
+                              className={`rounded-lg border border-border/50 bg-muted/20 px-3 py-2 ${toggleId ? 'cursor-pointer hover:border-border transition-colors' : ''}`}
+                              onClick={toggleId ? () => toggleCatGroup(toggleId) : undefined}
+                              aria-expanded={item.memberOfGroupId ? true : item.groupId ? false : undefined}
                             >
                               <div className="flex items-center gap-1.5 mb-0.5">
                                 <div
@@ -1281,6 +1443,11 @@ export default function ReportsPage() {
                                 <span className="text-[11px] text-muted-foreground truncate">
                                   {item.key === 'uncategorized' ? t('reports.uncategorized') : item.key === 'other' ? t('reports.other') : item.label}
                                 </span>
+                                {item.count != null && (
+                                  <span className="text-[10px] text-muted-foreground/70 shrink-0">({item.count})</span>
+                                )}
+                                {item.groupId && <ChevronRight size={10} className="text-muted-foreground shrink-0 ml-auto" />}
+                                {item.memberOfGroupId && <ChevronDown size={10} className="text-muted-foreground shrink-0 ml-auto" />}
                               </div>
                               <p className="text-xs font-bold tabular-nums text-foreground mb-1">
                                 {mask(formatCompact(item.total, userCurrency, locale))}
