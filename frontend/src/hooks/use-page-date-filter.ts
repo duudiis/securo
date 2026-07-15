@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { pageSettings, type PageSettingPayload } from '@/lib/api'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -21,13 +21,13 @@ import {
 export function usePageDateFilter(pageKey: string, defaultValue: DateFilterValue) {
   const queryClient = useQueryClient()
   const { current } = useWorkspace()
-  const [local, setLocal] = useState<DateFilterValue | null>(null)
-
-  // Workspace switch resets react-query caches; the in-session pick must not
-  // bleed into the next workspace either.
-  useEffect(() => {
-    setLocal(null)
-  }, [current?.id, pageKey])
+  // The in-session pick is namespaced by workspace+page, so a workspace
+  // switch (or page-key change) naturally drops back to the saved value —
+  // no reset effect needed.
+  const scopeKey = `${current?.id ?? ''}:${pageKey}`
+  const [localFor, setLocalFor] = useState<{ key: string; value: DateFilterValue } | null>(null)
+  const local = localFor && localFor.key === scopeKey ? localFor.value : null
+  const setLocal = (value: DateFilterValue) => setLocalFor({ key: scopeKey, value })
 
   const { data, isPending } = useQuery({
     queryKey: ['page-settings', pageKey],
@@ -46,13 +46,10 @@ export function usePageDateFilter(pageKey: string, defaultValue: DateFilterValue
     },
   })
 
-  const setValue = useCallback(
-    (next: DateFilterValue) => {
-      setLocal(next)
-      saveMutation.mutate(next)
-    },
-    [saveMutation.mutate],
-  )
+  const setValue = (next: DateFilterValue) => {
+    setLocal(next)
+    saveMutation.mutate(next)
+  }
 
   const range: DateRange = resolveDateRange(value)
 

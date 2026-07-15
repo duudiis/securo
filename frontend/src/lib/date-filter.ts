@@ -14,6 +14,7 @@ export type DateFilterValue =
   | { mode: 'rolling'; unit: 'days' | 'months' | 'years'; count: number }
   | { mode: 'ytd' }
   | { mode: 'custom'; from: string; to: string } // 'YYYY-MM-DD', both inclusive
+  | { mode: 'all' } // unbounded — resolves to empty from/to
 
 export type DateFilterMode = DateFilterValue['mode']
 
@@ -39,6 +40,8 @@ export function resolveDateRange(value: DateFilterValue, today: Date = new Date(
       return { from: fmt(startOfYear(today)), to: fmt(today) }
     case 'custom':
       return { from: value.from, to: value.to }
+    case 'all':
+      return { from: '', to: '' }
   }
 }
 
@@ -64,6 +67,8 @@ export function parseDateFilterValue(raw: unknown): DateFilterValue | null {
     }
     case 'ytd':
       return { mode: 'ytd' }
+    case 'all':
+      return { mode: 'all' }
     case 'custom':
       return typeof v.from === 'string' && ISO_DATE.test(v.from) &&
         typeof v.to === 'string' && ISO_DATE.test(v.to)
@@ -93,6 +98,8 @@ export function formatDateFilterValue(
           : t('dateFilter.pastYears', { count: value.count })
     case 'ytd':
       return t('dateFilter.ytd')
+    case 'all':
+      return t('dateFilter.allTime')
     case 'custom':
       return `${fmtDay(value.from)} — ${fmtDay(value.to)}`
   }

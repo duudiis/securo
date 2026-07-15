@@ -1088,6 +1088,7 @@
     "pastMonths": "Last {{count}} months",
     "pastYears": "Last {{count}} years",
     "ytd": "Year to date",
+    "allTime": "All time",
     "apply": "Apply",
     "from": "From",
     "to": "To",

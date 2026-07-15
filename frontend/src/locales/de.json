@@ -1088,6 +1088,7 @@
     "pastMonths": "Letzte {{count}} Monate",
     "pastYears": "Letzte {{count}} Jahre",
     "ytd": "Seit Jahresbeginn",
+    "allTime": "Gesamter Zeitraum",
     "apply": "Anwenden",
     "from": "Von",
     "to": "Bis",

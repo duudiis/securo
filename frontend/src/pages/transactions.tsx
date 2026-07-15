@@ -3,6 +3,8 @@ import { useRegisterPageChatContext } from '@/lib/page-chat-context'
 import { getAccountName } from '@/lib/account-utils'
 import { AccountIcon } from '@/components/account-icon'
 import { currentMonth, monthRange, monthFromRange } from '@/lib/month-utils'
+import { resolveDateRange, type DateFilterValue } from '@/lib/date-filter'
+import { usePageDateFilter } from '@/hooks/use-page-date-filter'
 import { MonthStepper } from '@/components/month-stepper'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -119,14 +121,48 @@ export default function TransactionsPage() {
     const t = searchParams.get('to')
     return f || t ? (t ?? '') : monthRange(currentMonth()).to
   })
+  // The global date filter's symbolic value (month / rolling / custom / all),
+  // kept in lockstep with filterFrom/filterTo. Cloud-persisted per page so the
+  // last pick is restored on the next visit; a URL range (deep link) wins.
+  const [dateValue, setDateValue] = useState<DateFilterValue>(() => {
+    const f = searchParams.get('from')
+    const t = searchParams.get('to')
+    if (!f && !t) return { mode: 'month', month: currentMonth() }
+    const m = monthFromRange(f ?? '', t ?? '')
+    return m ? { mode: 'month', month: m } : { mode: 'custom', from: f ?? '', to: t ?? '' }
+  })
+  const pageDateFilter = usePageDateFilter('transactions', { mode: 'month', month: currentMonth() })
+  const urlHadRangeRef = useRef(!!(searchParams.get('from') || searchParams.get('to')))
+  const userTouchedDateRef = useRef(false)
+  const cloudRestoredRef = useRef(false)
+  const applyDateValue = (v: DateFilterValue, opts?: { persist?: boolean }) => {
+    setDateValue(v)
+    const r = resolveDateRange(v)
+    setFilterFrom(r.from)
+    setFilterTo(r.to)
+    setPage(1)
+    if (opts?.persist !== false) {
+      userTouchedDateRef.current = true
+      pageDateFilter.setValue(v)
+    }
+  }
+  // Restore the cloud-saved filter once per mount. Deep links (?from/?to) and
+  // anything the user already picked this session take precedence.
+  useEffect(() => {
+    if (!pageDateFilter.isLoaded || cloudRestoredRef.current) return
+    cloudRestoredRef.current = true
+    if (urlHadRangeRef.current || userTouchedDateRef.current) return
+    const v = pageDateFilter.value
+    setDateValue(v)
+    const r = resolveDateRange(v)
+    setFilterFrom(r.from)
+    setFilterTo(r.to)
+  }, [pageDateFilter.isLoaded, pageDateFilter.value])
   // Month reflected by the stepper: the active range when it spans exactly one
   // full month, otherwise the current month (custom ranges still navigable).
   const steppedMonth = monthFromRange(filterFrom, filterTo) ?? currentMonth()
   const handleMonthChange = (ym: string) => {
-    const { from, to } = monthRange(ym)
-    setFilterFrom(from)
-    setFilterTo(to)
-    setPage(1)
+    applyDateValue({ mode: 'month', month: ym })
   }
   const [searchInput, setSearchInput] = useState(() => searchParams.get('q') ?? '')
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
@@ -225,11 +261,14 @@ export default function TransactionsPage() {
       // Explicit range in the URL (shared/bookmarked link) wins.
       setFilterFrom(urlFrom ?? '')
       setFilterTo(urlTo ?? '')
+      const m = monthFromRange(urlFrom ?? '', urlTo ?? '')
+      setDateValue(m ? { mode: 'month', month: m } : { mode: 'custom', from: urlFrom ?? '', to: urlTo ?? '' })
     } else if (!isInitial) {
       // A genuine navigation cleared the range (e.g. Clear filters): show all.
       // On the initial mount we keep the current-month default seeded above.
       setFilterFrom('')
       setFilterTo('')
+      setDateValue({ mode: 'all' })
     }
     setFilterMinAmount(searchParams.get('min_amount') ?? '');
     setFilterMaxAmount(searchParams.get('max_amount') ?? '');
@@ -332,7 +371,9 @@ export default function TransactionsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['transactions', page, limit, effectiveAccountIds, filterCategoryIds, filterUncategorized, filterPayee, filterGroupId, filterType, filterFrom, filterTo, filterMinAmount, filterMaxAmount, searchQuery, tagFilters, grid.sortBy, grid.sortDir],
-    enabled: !noAccounts,
+    // Wait for the cloud-saved date filter before the first fetch (deep links
+    // with an explicit range don't need to).
+    enabled: !noAccounts && (pageDateFilter.isLoaded || urlHadRangeRef.current),
     queryFn: () =>
       transactions.list({
         page,
@@ -1241,15 +1282,13 @@ export default function TransactionsPage() {
         onGroupIdChange={(v) => { setFilterGroupId(v); setPage(1) }}
         filterType={filterType}
         onTypeChange={(v) => { setFilterType(v); setPage(1) }}
-        filterFrom={filterFrom}
-        filterTo={filterTo}
-        onDateRangeChange={(from, to) => { setFilterFrom(from); setFilterTo(to); setPage(1) }}
+        dateFilterValue={dateValue}
+        onDateFilterChange={applyDateValue}
         filterMinAmount={filterMinAmount}
         filterMaxAmount={filterMaxAmount}
         onAmountRangeChange={(min, max) => { setFilterMinAmount(min); setFilterMaxAmount(max); setPage(1) }}
         onClearAll={() => {
-          setFilterFrom('')
-          setFilterTo('')
+          applyDateValue({ mode: 'all' })
           setFilterAccountIds([])
           setFilterCategoryIds([])
           setFilterUncategorized(false)

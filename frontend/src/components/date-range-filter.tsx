@@ -169,6 +169,20 @@ export function DateRangeFilter({
         {activeTab === 'rolling' && (
           <div className="p-3 w-64">
             <div className="grid grid-cols-2 gap-1.5">
+              {modes.includes('all') && (
+                <button
+                  type="button"
+                  onClick={() => pick({ mode: 'all' })}
+                  className={cn(
+                    'px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors text-left',
+                    value.mode === 'all'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-foreground hover:bg-muted/50',
+                  )}
+                >
+                  {t('dateFilter.allTime')}
+                </button>
+              )}
               {ROLLING_PRESETS.map((preset) => (
                 <button
                   key={preset.key}
