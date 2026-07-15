@@ -30,6 +30,9 @@ import { useCollectionFilter } from '@/contexts/collection-filter-context'
 import type { ReportResponse, CategoryTrendItem, ReportDataPoint } from '@/types'
 import { useToggleSet } from '@/hooks/use-toggle-set'
 import { buildCategoryGroupIndex, type GroupBucket } from '@/lib/category-groups'
+import { DateRangeFilter } from '@/components/date-range-filter'
+import { usePageDateFilter } from '@/hooks/use-page-date-filter'
+import { resolveDateRange, type DateFilterValue } from '@/lib/date-filter'
 
 // A small qualitative palette of well-separated hues for the composition
 // detail ring. Capped to a handful of slices, distinct colours make each
@@ -82,27 +85,18 @@ function sumTrendSeries(seriesList: ReportDataPoint[][]): ReportDataPoint[] {
 // the month-aligned window `months` produces.
 type RangeOption = { key: string; months: number; period?: 'ytd'; days?: number }
 
-const HISTORICAL_RANGE_OPTIONS: readonly RangeOption[] = [
-  { key: '6m', months: 6 },
-  { key: 'ytd', months: 12, period: 'ytd' },
-  { key: '1y', months: 12 },
-  { key: '2y', months: 24 },
-]
+// Historical tabs use the global DateRangeFilter (cloud-persisted per tab);
+// only the forward-looking cash-flow horizon keeps preset pills.
+const REPORT_DATE_DEFAULTS: Record<string, DateFilterValue> = {
+  net_worth: { mode: 'rolling', unit: 'months', count: 12 },
+  income_expenses: { mode: 'rolling', unit: 'months', count: 12 },
+  money_map: { mode: 'rolling', unit: 'months', count: 3 },
+}
 
 const FORWARD_RANGE_OPTIONS: readonly RangeOption[] = [
   { key: '3m', months: 3 },
   { key: '6m', months: 6 },
   { key: '12m', months: 12 },
-]
-
-// The Money Map answers "where did my money go lately", so it leans on recent
-// windows (down to 30 days) and drops the 2Y trend view the other tabs keep.
-const MONEY_MAP_RANGE_OPTIONS: readonly RangeOption[] = [
-  { key: '30d', months: 1, days: 30 },
-  { key: '3m', months: 3 },
-  { key: '6m', months: 6 },
-  { key: 'ytd', months: 12, period: 'ytd' },
-  { key: '1y', months: 12 },
 ]
 
 const HISTORICAL_INTERVAL_OPTIONS = [
@@ -179,46 +173,78 @@ export default function ReportsPage() {
   // The Money Map (Sankey) tab is driven by the same income/expenses
   // composition, aggregated over the selected historical range.
   const isMoneyMap = activeTab === 'money_map'
-  const rangeOptions = isCashFlow
-    ? FORWARD_RANGE_OPTIONS
-    : isMoneyMap
-      ? MONEY_MAP_RANGE_OPTIONS
-      : HISTORICAL_RANGE_OPTIONS
   const intervalOptions = isCashFlow ? CASH_FLOW_INTERVAL_OPTIONS : HISTORICAL_INTERVAL_OPTIONS
-  const selectedRange = rangeOptions.find((r) => r.key === rangeKey) ?? rangeOptions[0]
+  // Cash-flow horizon (forward projection) — the only tab still on pills.
+  const selectedRange = FORWARD_RANGE_OPTIONS.find((r) => r.key === rangeKey) ?? FORWARD_RANGE_OPTIONS[1]
   const months = selectedRange.months
-  const period = selectedRange.period
-  const days = selectedRange.days
+
+  // Global date filter for the historical tabs, cloud-persisted per tab.
+  const dateFilter = usePageDateFilter(
+    `reports.${activeTab}`,
+    REPORT_DATE_DEFAULTS[activeTab] ?? { mode: 'rolling', unit: 'months', count: 12 },
+  )
+
+  const windowDays = (v: DateFilterValue): number => {
+    const r = resolveDateRange(v)
+    if (!r.from || !r.to) return Infinity
+    return (new Date(r.to + 'T00:00:00').getTime() - new Date(r.from + 'T00:00:00').getTime()) / 86_400_000 + 1
+  }
+
+  const handleDateFilterChange = (v: DateFilterValue) => {
+    dateFilter.setValue(v)
+    setSelectedDate(null)
+    // Short windows read poorly at monthly/yearly granularity — drop to daily.
+    if (windowDays(v) <= 92 && (interval === 'monthly' || interval === 'yearly')) {
+      setInterval('daily')
+    }
+  }
+
+  // Map the filter value onto the report API's params. Rolling windows map to
+  // the native months/days/period params; whole-month and custom picks (and
+  // rolling windows beyond the API's 24-month cap) use the from/to override.
+  const reportParams = (() => {
+    const v = dateFilter.value
+    switch (v.mode) {
+      case 'rolling': {
+        if (v.unit === 'days') return { months: 1, period: undefined, days: v.count, window: undefined }
+        const m = v.unit === 'months' ? v.count : v.count * 12
+        return m <= 24
+          ? { months: m, period: undefined, days: undefined, window: undefined }
+          : { months: 24, period: undefined, days: undefined, window: resolveDateRange(v) }
+      }
+      case 'ytd':
+        return { months: 12, period: 'ytd' as const, days: undefined, window: undefined }
+      default:
+        return { months: 1, period: undefined, days: undefined, window: resolveDateRange(v) }
+    }
+  })()
 
   const handleSelectTab = (key: string) => {
     setActiveTab(key)
     setCompositionView(key === 'net_worth' ? 'netWorth' : 'net')
     setSparklinePage(0)
     setSelectedDate(null)
-    // Clamp months/interval to options supported by the new tab
-    const nextRanges = key === 'cash_flow'
-      ? FORWARD_RANGE_OPTIONS
-      : key === 'money_map'
-        ? MONEY_MAP_RANGE_OPTIONS
-        : HISTORICAL_RANGE_OPTIONS
-    if (!nextRanges.some((r) => r.key === rangeKey)) {
-      setRangeKey(key === 'cash_flow' ? '6m' : key === 'money_map' ? '3m' : '1y')
-    }
-    const nextIntervals = key === 'cash_flow' ? CASH_FLOW_INTERVAL_OPTIONS : HISTORICAL_INTERVAL_OPTIONS
-    if (!nextIntervals.some((i) => i.value === interval)) {
-      setInterval(key === 'cash_flow' ? 'daily' : 'monthly')
+    // Clamp the cash-flow horizon/interval to options that tab supports
+    if (key === 'cash_flow') {
+      if (!FORWARD_RANGE_OPTIONS.some((r) => r.key === rangeKey)) setRangeKey('6m')
+      if (!CASH_FLOW_INTERVAL_OPTIONS.some((i) => i.value === interval)) setInterval('daily')
     }
   }
 
   const { data, isLoading } = useQuery<ReportResponse>({
-    queryKey: ['reports', activeTab, rangeKey, months, period ?? null, days ?? null, interval, isCashFlow ? cashFlowBaseline : false, activeAccountIds, activeWalletIds],
+    queryKey: ['reports', activeTab, isCashFlow ? rangeKey : JSON.stringify(dateFilter.value), interval, isCashFlow ? cashFlowBaseline : false, activeAccountIds, activeWalletIds],
     queryFn: () =>
       isCashFlow
         ? reports.cashFlow(months, interval, cashFlowBaseline, acctIds)
         : activeTab === 'income_expenses' || isMoneyMap
-          ? reports.incomeExpenses(months, interval, acctIds, period, days)
-          : reports.netWorth(months, interval, acctIds, walletIds, period),
-    enabled: currentTab.enabled && !(noAccounts && activeTab !== 'net_worth'),
+          ? reports.incomeExpenses(reportParams.months, interval, acctIds, reportParams.period, reportParams.days, reportParams.window)
+          : reports.netWorth(
+              reportParams.months, interval, acctIds, walletIds, reportParams.period,
+              // net-worth has no native `days` param — rolling-days windows go
+              // through the from/to override instead.
+              reportParams.days ? resolveDateRange(dateFilter.value) : reportParams.window,
+            ),
+    enabled: currentTab.enabled && !(noAccounts && activeTab !== 'net_worth') && (isCashFlow || dateFilter.isLoaded),
   })
 
   // Category-group rollup: composition/trend keys are category UUIDs on the
@@ -634,21 +660,30 @@ export default function ReportsPage() {
                 </span>
               </div>
             )}
-            <div className="flex items-center rounded-lg border border-border bg-card overflow-hidden">
-              {rangeOptions.map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => { setRangeKey(opt.key); setSelectedDate(null) }}
-                  className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    rangeKey === opt.key
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  }`}
-                >
-                  {t(`reports.${RANGE_LABELS[opt.key]}`)}
-                </button>
-              ))}
-            </div>
+            {isCashFlow ? (
+              <div className="flex items-center rounded-lg border border-border bg-card overflow-hidden">
+                {FORWARD_RANGE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => { setRangeKey(opt.key); setSelectedDate(null) }}
+                    className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      rangeKey === opt.key
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    {t(`reports.${RANGE_LABELS[opt.key]}`)}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <DateRangeFilter
+                value={dateFilter.value}
+                onChange={handleDateFilterChange}
+                modes={['month', 'rolling', 'ytd', 'custom']}
+                className="py-1 text-xs"
+              />
+            )}
             <div className={`flex items-center rounded-lg border border-border bg-card overflow-hidden ${isMoneyMap ? 'hidden' : ''}`}>
               {intervalOptions.map((opt) => (
                 <button
