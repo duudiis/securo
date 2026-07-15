@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import type { ImportPreviewTransaction, ImportReviewTransaction, ImportLog } from '@/types'
-import { Upload, FileText, X, CheckCircle2, AlertCircle, History, Trash2, Settings2, Download, Plus } from 'lucide-react'
+import { Upload, FileText, X, CheckCircle2, AlertCircle, History, Trash2, Settings2, Plus } from 'lucide-react'
 import { AccountIcon } from '@/components/account-icon'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { ImportSummaryBar } from '@/components/import-summary-bar'
@@ -582,38 +582,19 @@ export function ImportSection() {
           <History className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold text-foreground">{t('import.history')}</h2>
           {canWrite && (
-            <div className="ml-auto flex items-center gap-1.5">
-              <button
-                type="button"
-                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                title={t('import.downloadTemplate')}
-                onClick={() => {
-                  const csv = 'date,description,amount,currency,fx_rate\n2026-01-15,Grocery Store,-120.50,USD,\n2026-01-20,Salary Payment,5000.00,EUR,1.08\n'
-                  const blob = new Blob([csv], { type: 'text/csv' })
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = 'template.csv'
-                  a.click()
-                  URL.revokeObjectURL(url)
-                }}
-              >
-                <Download size={14} />
-              </button>
-              <button
-                type="button"
-                className={`h-7 w-7 inline-flex items-center justify-center rounded-md border transition-colors ${
-                  dragOver
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-                title={t('import.addFiles')}
-                aria-label={t('import.addFiles')}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Plus size={15} />
-              </button>
-            </div>
+            <button
+              type="button"
+              className={`ml-auto h-7 w-7 inline-flex items-center justify-center rounded-md border transition-colors ${
+                dragOver
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+              title={t('import.addFiles')}
+              aria-label={t('import.addFiles')}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Plus size={15} />
+            </button>
           )}
         </div>
 
@@ -654,7 +635,7 @@ export function ImportSection() {
                         if (!acc) return log.account_name || '—'
                         return (
                           <span className="flex items-center gap-2 min-w-0">
-                            <AccountIcon account={acc} />
+                            <AccountIcon account={acc} size="sm" />
                             <span className="truncate text-foreground">{getAccountName(acc)}</span>
                           </span>
                         )

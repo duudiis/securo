@@ -526,7 +526,6 @@ export default function AccountsPage() {
 
           {/* Import (merged from the former /import page) */}
           <div className="pt-2">
-            <h2 className="text-sm font-semibold text-foreground mb-3">{t('import.subtitle')}</h2>
             <ImportSection />
           </div>
         </div>
