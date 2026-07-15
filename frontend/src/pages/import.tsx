@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label'
 import type { ImportPreviewTransaction, ImportReviewTransaction, ImportLog } from '@/types'
 import { Upload, FileText, X, CheckCircle2, AlertCircle, History, Trash2, Settings2, Download } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { PageHeader } from '@/components/page-header'
 import { ImportSummaryBar } from '@/components/import-summary-bar'
 import { ImportReviewTable } from '@/components/import-review-table'
 import { useAuth } from '@/contexts/auth-context'
@@ -45,7 +44,9 @@ function toReviewTransactions(txns: ImportPreviewTransaction[]): ImportReviewTra
   }))
 }
 
-export default function ImportPage() {
+// Rendered as the bottom section of the Accounts page (the standalone
+// /import route now redirects there).
+export function ImportSection() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const { canWrite } = useWorkspace()
@@ -276,8 +277,6 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader section={t('import.title')} title={t('import.subtitle')} />
-
       {/* Upload zone */}
       {canWrite && <div
         className={`bg-card rounded-xl border-2 border-dashed transition-all cursor-pointer ${

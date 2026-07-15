@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/contexts/auth-context'
@@ -18,7 +18,6 @@ const DashboardPage = lazy(() => import('@/pages/dashboard'))
 const TransactionsPage = lazy(() => import('@/pages/transactions'))
 const AccountsPage = lazy(() => import('@/pages/accounts'))
 const AccountDetailPage = lazy(() => import('@/pages/account-detail'))
-const ImportPage = lazy(() => import('@/pages/import'))
 const RulesPage = lazy(() => import('@/pages/rules'))
 const CategoriesPage = lazy(() => import('@/pages/categories'))
 const CollectionsPage = lazy(() => import('@/pages/collections'))
@@ -83,7 +82,8 @@ function App() {
                   <Route path="/accounts/:id" element={<AccountDetailPage />} />
                   <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
                   <Route path="/enable-banking" element={<OAuthCallbackPage />} />
-                  <Route path="/import" element={<ImportPage />} />
+                  {/* Import merged into the Accounts page */}
+                  <Route path="/import" element={<Navigate to="/accounts" replace />} />
                   <Route path="/rules" element={<RulesPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/collections" element={<CollectionsPage />} />

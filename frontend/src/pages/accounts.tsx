@@ -36,6 +36,7 @@ import {
 } from 'lucide-react'
 import { AccountIcon, ConnectionLogo, getAccountTypeConfig } from '@/components/account-icon'
 import { PageHeader } from '@/components/page-header'
+import { ImportSection } from '@/pages/import'
 import { BankConnectDialog } from '@/components/bank-connect-dialog'
 import { ConnectorSelectDialog, type Provider } from '@/components/connector-select-dialog'
 import { OAuthConnectDialog } from '@/components/oauth-connect-dialog'
@@ -263,12 +264,10 @@ export default function AccountsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Manual Accounts */}
-          <div className="bg-card rounded-xl border border-border shadow-sm">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
-              <h2 className="text-sm font-medium text-muted-foreground">{t('accounts.manualAccounts')}</h2>
-            </div>
-            {manualAccounts.length > 0 ? (
+          {/* Manual accounts — same presentation as connected ones, just
+              without a connection header (no special labeled box). */}
+          {manualAccounts.length > 0 && (
+            <div className="bg-card rounded-xl border border-border shadow-sm">
               <div className="divide-y divide-muted">
                 {manualAccounts.map((acc) => {
                   const cfg = getAccountTypeConfig(acc.type)
@@ -339,12 +338,8 @@ export default function AccountsPage() {
                   )
                 })}
               </div>
-            ) : (
-              <div className="px-5 py-8 text-center">
-                <p className="text-sm text-muted-foreground">{t('accounts.noManualAccounts')}</p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Bank Connections */}
           {connectionsList && connectionsList.length > 0 ? (
@@ -366,8 +361,8 @@ export default function AccountsPage() {
                               variant={conn.status === 'active' ? 'default' : 'secondary'}
                               className={
                                 conn.status === 'active'
-                                  ? 'text-[10px] px-1.5 py-0 h-4'
-                                  : 'text-[10px] px-1.5 py-0 h-4 border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                                  ? 'text-[10px] px-1.5 py-0 h-4 capitalize'
+                                  : 'text-[10px] px-1.5 py-0 h-4 capitalize border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
                               }
                             >
                               {conn.status}
@@ -500,11 +495,11 @@ export default function AccountsPage() {
                 )
               })}
             </div>
-          ) : (
+          ) : manualAccounts.length === 0 ? (
             <div className="bg-card rounded-xl border border-dashed border-border p-8 text-center">
               <p className="text-sm text-muted-foreground">{t('accounts.noBankConnections')}</p>
             </div>
-          )}
+          ) : null}
 
           {/* Closed Accounts */}
           {closedAccounts.length > 0 && (
@@ -540,6 +535,12 @@ export default function AccountsPage() {
               </div>
             </div>
           )}
+
+          {/* Import (merged from the former /import page) */}
+          <div className="pt-2">
+            <h2 className="text-sm font-semibold text-foreground mb-3">{t('import.subtitle')}</h2>
+            <ImportSection />
+          </div>
         </div>
       )}
 

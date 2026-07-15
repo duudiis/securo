@@ -52,7 +52,7 @@ const NAV_ITEMS: StaticItem[] = [
   { id: 'nav-dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, path: '/', keywords: ['home', 'inicio', 'início'] },
   { id: 'nav-transactions', labelKey: 'nav.transactions', icon: ArrowLeftRight, path: '/transactions', keywords: ['tx', 'transacoes', 'transações'] },
   { id: 'nav-accounts', labelKey: 'nav.accounts', icon: Building2, path: '/accounts', keywords: ['contas'] },
-  { id: 'nav-import', labelKey: 'nav.import', icon: Upload, path: '/import', keywords: ['csv', 'ofx', 'importar'] },
+  { id: 'nav-import', labelKey: 'nav.import', icon: Upload, path: '/accounts', keywords: ['csv', 'ofx', 'importar'] },
   { id: 'nav-reports', labelKey: 'nav.reports', icon: BarChart3, path: '/reports', keywords: ['relatorios', 'relatórios', 'charts'] },
   { id: 'nav-assets', labelKey: 'nav.assets', icon: Landmark, path: '/assets', keywords: ['patrimonio', 'patrimônio'] },
   { id: 'nav-budgets', labelKey: 'nav.budgets', icon: PiggyBank, path: '/budgets', keywords: ['orcamentos', 'orçamentos'] },
@@ -75,7 +75,7 @@ const QUICK_ACTIONS: StaticItem[] = [
     id: 'action-import',
     labelKey: 'cmdk.actions.importFile',
     icon: FileSpreadsheet,
-    onSelect: (nav) => nav('/import'),
+    onSelect: (nav) => nav('/accounts'),
     keywords: ['upload', 'csv', 'ofx', 'qif'],
   },
   {
