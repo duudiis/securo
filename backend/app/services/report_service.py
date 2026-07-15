@@ -277,6 +277,8 @@ async def get_net_worth_report(
     account_ids: Optional[list[uuid.UUID]] = None,
     asset_group_ids: Optional[list[uuid.UUID]] = None,
     period: str | None = None,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
 ) -> ReportResponse:
     """Build a full ReportResponse for net worth over time."""
     # A wallet-only collection (wallets, no accounts) still filters.
@@ -284,12 +286,18 @@ async def get_net_worth_report(
         account_ids = []
     today = date.today()
     start = _report_start_date(today, months, period)
+    # Fork addition: explicit window override (custom range in the date filter).
+    end = to_date or today
+    if from_date:
+        start = from_date
+    if start > end:
+        start = end
 
     # Get user's primary currency
     user = await session.get(User, user_id)
     primary_currency = user.primary_currency if user else get_settings().default_currency
 
-    points = _date_points(start, today, interval)
+    points = _date_points(start, end, interval)
 
     # Compute snapshot at each date point
     trend: list[ReportDataPoint] = []
@@ -346,8 +354,8 @@ async def get_net_worth_report(
         interval=interval,
     )
 
-    # The last trend point is always today — reuse its per-item composition for
-    # the response-level `composition` field (current snapshot for the donut).
+    # The last trend point is always the window end — reuse its per-item
+    # composition for the response-level `composition` field (snapshot donut).
     composition = trend[-1].composition if trend else []
 
     return ReportResponse(summary=summary, trend=trend, meta=meta, composition=composition)
@@ -380,12 +388,20 @@ async def get_income_expenses_report(
     account_ids: Optional[list[uuid.UUID]] = None,
     period: str | None = None,
     days: int | None = None,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
 ) -> ReportResponse:
     """Build a ReportResponse for income vs expenses over time."""
     filtered = account_ids is not None
     acct_filter = [Transaction.account_id.in_(account_ids)] if filtered else []
     today = date.today()
     start = _report_start_date(today, months, period, days)
+    # Fork addition: explicit window override (custom range in the date filter).
+    end = to_date or today
+    if from_date:
+        start = from_date
+    if start > end:
+        start = end
 
     # Get user's primary currency + global reporting mode
     user = await session.get(User, user_id)
@@ -409,7 +425,7 @@ async def get_income_expenses_report(
             Transaction.workspace_id == workspace_id,
             Account.is_closed == False,
             report_date >= start,
-            report_date <= today,
+            report_date <= end,
             Transaction.source != "opening_balance",
             counts_as_user_pnl(),
             *acct_filter,
@@ -466,7 +482,7 @@ async def get_income_expenses_report(
             Transaction.workspace_id == workspace_id,
             _TS_.group_member_id.notin_(own_member_ids_sq),
             report_date >= start,
-            report_date <= today,
+            report_date <= end,
             Transaction.source != "opening_balance",
             counts_as_user_pnl(),
         )
@@ -529,7 +545,7 @@ async def get_income_expenses_report(
             Transaction.user_id != user_id,
             Transaction.workspace_id != workspace_id,
             report_date >= start,
-            report_date <= today,
+            report_date <= end,
             Transaction.source != "opening_balance",
             counts_as_user_pnl(),
         )
@@ -560,7 +576,7 @@ async def get_income_expenses_report(
     from app.services.dashboard_service import _month_range, _get_recurring_projections
 
     cursor = start
-    while cursor <= today:
+    while cursor <= end:
         m_start, m_end = _month_range(cursor)
         # A day-window range can start mid-month: only project occurrences that
         # fall inside the requested window.
@@ -586,7 +602,7 @@ async def get_income_expenses_report(
             cursor = date(cursor.year, cursor.month + 1, 1)
 
     # Generate all expected date points and map to results
-    points = _date_points(start, today, interval)
+    points = _date_points(start, end, interval)
     trend: list[ReportDataPoint] = []
     total_income = 0.0
     total_expenses = 0.0
@@ -667,7 +683,7 @@ async def get_income_expenses_report(
             Transaction.workspace_id == workspace_id,
             Account.is_closed == False,
             report_date >= start,
-            report_date <= today,
+            report_date <= end,
             Transaction.source != "opening_balance",
             counts_as_user_pnl(),
             *acct_filter,
@@ -695,7 +711,7 @@ async def get_income_expenses_report(
     # owner_split_offset_by_category is debit-only). Keeps the report's
     # composition consistent with summary totals under share-only model.
     full_range_offset = {} if filtered else await owner_split_offset_by_category(
-        session, user_id, start, today + timedelta(days=1),
+        session, user_id, start, end + timedelta(days=1),
         use_effective_date=accounting_mode == "accrual",
         primary_currency=primary_currency,
     )
@@ -729,7 +745,7 @@ async def get_income_expenses_report(
             Transaction.workspace_id == workspace_id,
             Account.is_closed == False,
             report_date >= start,
-            report_date <= today,
+            report_date <= end,
             Transaction.source != "opening_balance",
             Transaction.type == "debit",
             Transaction.transfer_pair_id.is_(None),
@@ -767,7 +783,7 @@ async def get_income_expenses_report(
             Transaction.workspace_id == workspace_id,
             Account.is_closed == False,
             report_date >= start,
-            report_date <= today,
+            report_date <= end,
             Transaction.source != "opening_balance",
             counts_as_user_pnl(),
             *acct_filter,
@@ -814,7 +830,7 @@ async def get_income_expenses_report(
             Transaction.type == "debit",
             _TS_.group_member_id.notin_(own_member_ids_sq),
             report_date >= start,
-            report_date <= today,
+            report_date <= end,
             Transaction.source != "opening_balance",
             counts_as_user_pnl(),
         )
@@ -844,7 +860,7 @@ async def get_income_expenses_report(
     # Add recurring projections to composition and category trend
     cat_cache: dict[str, dict] = {}
     cursor2 = start
-    while cursor2 <= today:
+    while cursor2 <= end:
         m_start, m_end = _month_range(cursor2)
         projections = await _get_recurring_projections(session, workspace_id, m_start, m_end, account_ids)
         period_label = _format_date_label(cursor2, interval)
