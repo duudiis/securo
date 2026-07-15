@@ -12,6 +12,8 @@ import type { Transaction } from '@/types'
 export type DrillDownFilter = {
   title: string
   category_id?: string
+  // Scope to a set of categories (e.g. all categories in a category group).
+  category_ids?: string[]
   uncategorized?: boolean
   account_id?: string
   // Scope to a set of accounts (e.g. the active collection's accounts).
@@ -63,6 +65,7 @@ export function TransactionDrillDown({
     queryFn: () =>
       transactionsApi.list({
         category_id: filter?.category_id,
+        category_ids: filter?.category_ids,
         uncategorized: filter?.uncategorized,
         account_id: filter?.account_id,
         account_ids: filter?.account_ids,
@@ -117,6 +120,7 @@ export function TransactionDrillDown({
       // Filter projected txs by drill-down criteria
       if (filter?.type && pt.type !== filter.type) continue
       if (filter?.category_id && String(pt.category_id) !== filter.category_id) continue
+      if (filter?.category_ids && !filter.category_ids.includes(String(pt.category_id))) continue
       if (filter?.uncategorized && pt.category_id != null) continue
       if (filter?.from && pt.date < filter.from) continue
       if (filter?.to && pt.date > filter.to) continue
