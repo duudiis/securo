@@ -138,6 +138,43 @@ function daysUntil(dateStr: string): number {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
 
+/**
+ * Placeholder goals for skeleton mask mode: while loading, the real goal
+ * cards render these and the [data-skeletonize] mask turns every leaf into
+ * a shimmer bar. Text only needs representative widths — never visible.
+ * Percentages stay under 30 so the progress bar keeps its neutral color.
+ */
+const PH_COLOR = '#8A8F9E'
+
+const PLACEHOLDER_GOALS = Array.from({ length: 5 }, (_, i) => ({
+  id: `ph-${i}`,
+  user_id: 'ph',
+  name: ['Emergency fund', 'Vacation to Japan', 'New car', 'Home down payment', 'Retirement savings'][i],
+  target_amount: 10000,
+  current_amount: 1200 + i * 350,
+  currency: 'USD',
+  target_amount_primary: null,
+  current_amount_primary: null,
+  target_date: i % 2 === 0 ? '2026-12-31' : null,
+  tracking_type: 'manual',
+  account_id: null,
+  asset_id: null,
+  asset_group_id: null,
+  status: 'active',
+  icon: 'circle-help',
+  color: PH_COLOR,
+  position: i,
+  metadata_json: null,
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
+  percentage: [24, 12, 28, 18, 8][i],
+  monthly_contribution: i % 2 === 0 ? 250 : null,
+  on_track: i % 2 === 0 ? 'on_track' : null,
+  account_name: i === 1 ? 'Savings account' : null,
+  asset_name: null,
+  asset_group_name: null,
+})) as unknown as Goal[]
+
 export default function GoalsPage() {
   const { t } = useTranslation()
   const { mask } = usePrivacyMode()
@@ -158,6 +195,10 @@ export default function GoalsPage() {
     queryKey: ['goals', statusFilter],
     queryFn: () => goalsApi.list(statusFilter || undefined),
   })
+
+  // While loading, real goal cards render placeholder goals and the skeleton
+  // mask shimmers them in place (see SkeletonSurface mask mode).
+  const displayGoals = goalsList ?? (isLoading ? PLACEHOLDER_GOALS : [])
 
   const { data: accountsList } = useQuery({
     queryKey: ['accounts'],
@@ -259,7 +300,7 @@ export default function GoalsPage() {
         ))}
       </div>
 
-      <SkeletonSurface loading={isLoading}>
+      <SkeletonSurface mask loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('goals.title')}
@@ -271,9 +312,9 @@ export default function GoalsPage() {
             ) : undefined
           }
         />
-        {goalsList && goalsList.length > 0 ? (
+        {displayGoals.length > 0 ? (
           <div className="divide-y divide-border">
-            {goalsList.map((goal) => {
+            {displayGoals.map((goal) => {
               const days = goal.target_date ? daysUntil(goal.target_date) : null
               const progressColor = goal.percentage >= 100
                 ? 'bg-emerald-500'

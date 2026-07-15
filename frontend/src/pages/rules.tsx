@@ -111,6 +111,35 @@ function actionSummary(actions: RuleAction[], categories: Category[], payeesList
   }).join('  ') || t('rules.noActions')
 }
 
+// Placeholder rows fed through the real rule rows while loading; the
+// SkeletonSurface mask turns the rendered leaves into shimmer bars, so only
+// representative text widths matter (see components/skeleton-surface).
+const PLACEHOLDER_RULES = Array.from({ length: 6 }, (_, i) => ({
+  id: `ph-${i}`,
+  name: [
+    'Groceries auto-categorize',
+    'Rent',
+    'Streaming subscriptions',
+    'Salary deposit from employer',
+    'Coffee shops',
+    'Utility bills',
+  ][i % 6],
+  conditions_op: 'and',
+  conditions: [
+    {
+      field: 'description',
+      op: 'contains',
+      value: ['grocery market', 'rent', 'streaming service monthly', 'employer inc', 'coffee', 'electric co'][i % 6],
+    },
+  ],
+  actions:
+    i % 2 === 0
+      ? [{ op: 'set_category', value: `ph-cat-${i}` }]
+      : [{ op: 'append_notes', value: 'matched automatically' }],
+  priority: i + 1,
+  is_active: true,
+})) as unknown as Rule[]
+
 export default function RulesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -275,7 +304,9 @@ export default function RulesPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   const sortedRules = useMemo(() => {
-    const list = [...(rulesList ?? [])]
+    // While loading, placeholder rows render through the real markup and the
+    // skeleton mask shimmers them in place (see SkeletonSurface mask mode).
+    const list = [...(rulesList ?? (isLoading ? PLACEHOLDER_RULES : []))]
     const dir = sortDir === 'asc' ? 1 : -1
     if (sortBy === 'name') {
       return list.sort((a, b) => dir * a.name.localeCompare(b.name))
@@ -290,13 +321,13 @@ export default function RulesPage() {
       return list.sort((a, b) => dir * getCategoryName(a).localeCompare(getCategoryName(b)))
     }
     return list.sort((a, b) => dir * (a.priority - b.priority))
-  }, [rulesList, categories, sortBy, sortDir])
+  }, [rulesList, isLoading, categories, sortBy, sortDir])
 
   return (
     <div>
       <PageHeader section={t('rules.section')} title={t('nav.rules')} />
 
-      <SkeletonSurface loading={isLoading}>
+      <SkeletonSurface mask loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('rules.sectionTitle')}
@@ -382,7 +413,7 @@ export default function RulesPage() {
             </button>
           ))}
         </div>
-        {rulesList && rulesList.length > 0 ? (
+        {sortedRules.length > 0 ? (
           <div className="divide-y divide-border">
             {sortedRules.map((rule) => (
               <div

@@ -1,19 +1,14 @@
 import { useState, useCallback, useEffect } from 'react'
 import { flushSync } from 'react-dom'
-import { getAccountName } from '@/lib/account-utils'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useDisplayLocale } from '@/hooks/use-display-locale'
-import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/auth-context'
-import { useCollectionFilter } from '@/contexts/collection-filter-context'
 import { CollectionSelector } from '@/components/collection-selector'
 import { auth as authApi, backup as backupApi, admin as adminApi } from '@/lib/api'
 import { resolveSupportedLang } from '@/lib/i18n'
 import { toast } from 'sonner'
 import { OnboardingTour } from '@/components/onboarding-tour'
 import { useTheme } from 'next-themes'
-import { accounts as accountsApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -39,7 +34,6 @@ import {
   Building2,
   SlidersHorizontal,
   Menu,
-  ChevronRight,
   Tag,
   PiggyBank,
   Target,
@@ -96,24 +90,13 @@ const navItems: NavItem[] = [
   { type: 'link', key: 'rules', path: '/rules', icon: SlidersHorizontal },
 ]
 
-function formatCurrency(value: number, currency = 'USD', locale = 'en-US') {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
-    value,
-  )
-}
-
 export function AppLayout() {
   const { t } = useTranslation()
   const { user, logout, updateUser } = useAuth()
-  const { activeAccountIds } = useCollectionFilter()
-  const userCurrency = user?.preferences?.currency_display ?? 'USD'
-  const locale = useDisplayLocale()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [accountsExpanded, setAccountsExpanded] = useState(true)
-  const [accountsShowAll, setAccountsShowAll] = useState(false)
-  const { privacyMode, togglePrivacyMode, mask } = usePrivacyMode()
+  const { privacyMode, togglePrivacyMode } = usePrivacyMode()
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [twoFactorOpen, setTwoFactorOpen] = useState(false)
   const [passkeysOpen, setPasskeysOpen] = useState(false)
@@ -198,20 +181,6 @@ export function AppLayout() {
     }
   }
 
-  const { data: accountsList } = useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => accountsApi.list(),
-  })
-
-  const allAccounts = accountsList ?? []
-  // When a collection is active, the sidebar list + total reflect only its
-  // accounts (issue #105). null = all accounts.
-  const visibleAccounts = activeAccountIds
-    ? allAccounts.filter((a) => activeAccountIds.includes(a.id))
-    : allAccounts
-  const totalBalance = visibleAccounts.reduce((sum, a) => {
-    return sum + Number(a.balance_primary ?? a.current_balance)
-  }, 0)
   const versionA11yLabel = t('app.versionAriaLabel', { version: APP_VERSION })
 
   return (
@@ -439,84 +408,6 @@ export function AppLayout() {
             })}
           </nav>
 
-          {/* Account list in sidebar */}
-          {allAccounts.length > 0 && (
-            <div className="px-3 pb-2 mt-2">
-              <button
-                onClick={() => setAccountsExpanded(!accountsExpanded)}
-                className="flex items-center justify-between w-full px-3 py-2 hover:text-sidebar-foreground transition-colors"
-              >
-                <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-sidebar-muted">
-                  {t('accounts.title')}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`tabular-nums font-medium text-xs ${totalBalance < 0 ? 'text-rose-400' : 'text-sidebar-muted'}`}
-                  >
-                    {mask(formatCurrency(totalBalance, userCurrency, locale))}
-                  </span>
-                  <ChevronRight
-                    size={12}
-                    className={cn(
-                      'text-sidebar-muted transition-transform',
-                      accountsExpanded && 'rotate-90',
-                    )}
-                  />
-                </div>
-              </button>
-              {accountsExpanded && (
-                <div className="mt-1 space-y-0.5">
-                  {[...visibleAccounts].sort((a, b) => Math.abs(Number(b.current_balance)) - Math.abs(Number(a.current_balance))).slice(0, accountsShowAll ? visibleAccounts.length : 3).map((acc) => {
-                    const balance = Number(acc.current_balance)
-                    const prevBalance = acc.previous_balance ?? 0
-                    const pctChange = prevBalance !== 0
-                      ? ((balance - prevBalance) / Math.abs(prevBalance)) * 100
-                      : null
-                    const typeKey = acc.type.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()).replace(/^./, c => c.toUpperCase())
-
-                    return (
-                      <Link
-                        key={acc.id}
-                        to={`/accounts/${acc.id}`}
-                        onClick={() => setSidebarOpen(false)}
-                        className="flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-sidebar-muted hover:bg-hover hover:text-sidebar-foreground transition-all"
-                      >
-                        <div className="truncate min-w-0">
-                          <span className="block truncate font-medium">{getAccountName(acc)}</span>
-                          <span className="block text-[10px] text-sidebar-muted/60">
-                            {t(`accounts.type${typeKey}`)}
-                          </span>
-                        </div>
-                        <div className="text-right shrink-0 ml-2">
-                          <span className={`block tabular-nums font-medium text-xs ${balance < 0 ? 'text-rose-400' : 'text-sidebar-foreground'}`}>
-                            {mask(formatCurrency(balance, acc.currency, locale))}
-                          </span>
-                          {pctChange !== null && (
-                            <span className={`block text-[10px] tabular-nums font-medium ${pctChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {mask(`${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}%`)}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                    )
-                  })}
-                  {visibleAccounts.length > 3 && (
-                    <button
-                      onClick={() => setAccountsShowAll(!accountsShowAll)}
-                      className="w-full px-3 py-1.5 text-[11px] font-medium text-sidebar-muted/70 hover:text-sidebar-foreground transition-colors text-center"
-                    >
-                      {accountsShowAll
-                        ? t('common.showLess', { defaultValue: 'Show less' })
-                        : t('common.showMore', {
-                            count: visibleAccounts.length - 3,
-                            defaultValue: `+${visibleAccounts.length - 3} more`,
-                          })}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
           </div>
 
           <UpdateAvailableBanner onOpen={() => setUpdateDialogOpen(true)} />

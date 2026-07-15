@@ -6,7 +6,7 @@ import { currentMonth, monthRange, monthFromRange } from '@/lib/month-utils'
 import { resolveDateRange, type DateFilterValue } from '@/lib/date-filter'
 import { usePageDateFilter } from '@/hooks/use-page-date-filter'
 import { SkeletonSurface } from '@/components/skeleton-surface'
-import { SkeletonTableRows } from '@/components/skeletons'
+import { placeholderTransactions } from '@/lib/skeleton-placeholders'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
@@ -72,6 +72,8 @@ function parseHashtags(notes: string | null): string[] {
   const matches = notes.match(/#[\w\u00C0-\u017E-]+/g)
   return matches ?? []
 }
+
+const PLACEHOLDER_TXS = placeholderTransactions(10)
 
 export default function TransactionsPage() {
   const { t } = useTranslation()
@@ -733,7 +735,9 @@ export default function TransactionsPage() {
 
   // Tag filtering is now applied server-side, so the visible list and the
   // page count both reflect the same filtered total — issue #88.
-  const filteredItems = data?.items ?? []
+  // While loading, the real rows render placeholder transactions and the
+  // skeleton mask shimmers them in place (see SkeletonSurface mask mode).
+  const filteredItems = data?.items ?? (noAccounts ? [] : PLACEHOLDER_TXS)
   const selectableItems = filteredItems.filter(tx => !tx.is_shared)
 
   const toggleSelectAll = () => {
@@ -1293,7 +1297,7 @@ export default function TransactionsPage() {
 
       {/* Table */}
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
-        <SkeletonSurface key={JSON.stringify(txQueryKey)} skeleton={<SkeletonTableRows rows={10} />} loading={!data}>
+        <SkeletonSurface key={JSON.stringify(txQueryKey)} mask loading={!data && !noAccounts}>
           {filteredItems.length > 0 ? (
           <div className="overflow-x-auto">
           <Table style={{ tableLayout: 'fixed' }}>

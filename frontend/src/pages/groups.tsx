@@ -23,6 +23,27 @@ import type { Group, GroupKind } from '@/types'
 
 type StatusFilter = 'active' | 'archived' | 'all'
 
+// Placeholder rows fed through the real group rows while loading; the
+// SkeletonSurface mask turns the rendered leaves into shimmer bars, so only
+// representative text widths matter (see components/skeleton-surface).
+const PLACEHOLDER_GROUPS = Array.from({ length: 5 }, (_, i) => ({
+  id: `ph-${i}`,
+  name: [
+    'Trip to the mountains',
+    'Apartment',
+    'Weekend barbecue crew',
+    'Office lunches',
+    'Family expenses',
+  ][i % 5],
+  kind: (['social', 'project', 'other', 'client', 'social'] as const)[i % 5],
+  default_currency: 'USD',
+  icon: 'circle-help',
+  color: '#8A8F9E',
+  is_archived: false,
+  is_owner: true,
+  notes: null,
+  members: Array.from({ length: 2 + (i % 3) }, (_, m) => ({ id: `ph-member-${i}-${m}` })),
+})) as unknown as Group[]
 
 export default function GroupsPage() {
   const { t } = useTranslation()
@@ -118,7 +139,9 @@ export default function GroupsPage() {
     }
   }
 
-  const visibleGroups = (list ?? []).filter((g) =>
+  // While loading, placeholder rows render through the real markup and the
+  // skeleton mask shimmers them in place (see SkeletonSurface mask mode).
+  const visibleGroups = (list ?? (isLoading ? PLACEHOLDER_GROUPS : [])).filter((g) =>
     statusFilter === 'active'
       ? !g.is_archived
       : statusFilter === 'archived'
@@ -153,7 +176,7 @@ export default function GroupsPage() {
         ))}
       </div>
 
-      <SkeletonSurface loading={isLoading}>
+      <SkeletonSurface mask loading={isLoading}>
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
         {visibleGroups.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
