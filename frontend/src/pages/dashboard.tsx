@@ -36,7 +36,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { CheckCircle2, CalendarIcon, Paperclip, Target, ArrowUpDown, HelpCircle, EyeClosed } from 'lucide-react'
+import { CheckCircle2, CalendarIcon, Paperclip, Target, ArrowUpDown, HelpCircle, EyeClosed, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ICON_MAP } from '@/lib/category-icons'
 import { PageHeader } from '@/components/page-header'
@@ -46,6 +46,8 @@ import { TransactionDrillDown, type DrillDownFilter } from '@/components/transac
 import { TransactionDialog, extractApiError } from '@/components/transaction-dialog'
 import { RuleDialog, type RuleDialogInitialData } from '@/components/rule-dialog'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
+import { useToggleSet } from '@/hooks/use-toggle-set'
+import { buildCategoryGroupIndex, rollupByGroup } from '@/lib/category-groups'
 import { useAuth } from '@/contexts/auth-context'
 import { useCollectionFilter } from '@/contexts/collection-filter-context'
 import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
@@ -383,6 +385,7 @@ export default function DashboardPage() {
           category_icon: s.category_icon,
           category_color: s.category_color,
           actual,
+          prev_amount: prevAmount,
           budget_amount: budget ? Number(budget.budget_amount) : null,
           percentage_used: budget?.percentage_used ?? null,
           momPct,
@@ -390,6 +393,34 @@ export default function DashboardPage() {
       })
       .sort((a, b) => catSortDesc ? b.actual - a.actual : a.actual - b.actual)
   }, [spending, budgetComparison, catSortDesc])
+
+  // Spending rolled up by category group; expanding a group reveals its categories.
+  const [expandedSpendingGroups, toggleSpendingGroup, setExpandedSpendingGroups] = useToggleSet()
+  const categoryGroupIndex = useMemo(
+    () => buildCategoryGroupIndex(categoryGroupsList, categoriesList),
+    [categoryGroupsList, categoriesList],
+  )
+  const spendingGroups = useMemo(() => {
+    const { groups } = rollupByGroup(mergedCategories, (r) => r.category_id, categoryGroupIndex)
+    return groups
+      .map(({ bucket, rows }) => {
+        const actual = rows.reduce((sum, r) => sum + r.actual, 0)
+        const prevAmount = rows.reduce((sum, r) => sum + r.prev_amount, 0)
+        const budgetAmount = rows.reduce((sum, r) => sum + (r.budget_amount ?? 0), 0)
+        let momPct: number | null = null
+        if (prevAmount > 0) momPct = ((actual - prevAmount) / prevAmount) * 100
+        else if (actual > 0) momPct = 100
+        return {
+          bucket,
+          rows,
+          actual,
+          momPct,
+          budget_amount: budgetAmount > 0 ? budgetAmount : null,
+          percentage_used: budgetAmount > 0 ? (actual / budgetAmount) * 100 : null,
+        }
+      })
+      .sort((a, b) => (catSortDesc ? b.actual - a.actual : a.actual - b.actual))
+  }, [mergedCategories, categoryGroupIndex, catSortDesc])
 
   const [txPage, setTxPage] = useState(1)
   const [txSortDesc, setTxSortDesc] = useState(true)
@@ -731,13 +762,26 @@ export default function DashboardPage() {
         <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col max-h-[420px]">
           <div className="px-5 py-4 border-b border-border shrink-0 flex items-center justify-between">
             <p className="text-sm font-semibold text-foreground">{t('dashboard.spendingByCategory')}</p>
-            <button
-              onClick={() => setCatSortDesc(v => !v)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              <ArrowUpDown size={13} />
-              {catSortDesc ? t('dashboard.sortHighest') : t('dashboard.sortLowest')}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const allExpanded = spendingGroups.every((g) => expandedSpendingGroups.has(g.bucket.id))
+                  setExpandedSpendingGroups(allExpanded ? new Set() : new Set(spendingGroups.map((g) => g.bucket.id)))
+                }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                title={spendingGroups.every((g) => expandedSpendingGroups.has(g.bucket.id)) ? t('categories.collapseAll') : t('categories.expandAll')}
+                aria-label={spendingGroups.every((g) => expandedSpendingGroups.has(g.bucket.id)) ? t('categories.collapseAll') : t('categories.expandAll')}
+              >
+                <ChevronsUpDown size={13} />
+              </button>
+              <button
+                onClick={() => setCatSortDesc(v => !v)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <ArrowUpDown size={13} />
+                {catSortDesc ? t('dashboard.sortHighest') : t('dashboard.sortLowest')}
+              </button>
+            </div>
           </div>
           <div className="p-3 overflow-y-auto flex-1">
             {spendingLoading ? (
@@ -746,60 +790,133 @@ export default function DashboardPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
-            ) : mergedCategories.length > 0 ? (
+            ) : spendingGroups.length > 0 ? (
               <div className="space-y-1.5">
-                {mergedCategories.map((item) => {
-                  const hasBudget = item.budget_amount != null && item.budget_amount > 0
-                  const pct = item.percentage_used
-                  const barColor = hasBudget
-                    ? pct! > 100 ? 'bg-rose-500' : pct! >= 80 ? 'bg-amber-400' : 'bg-emerald-500'
+                {spendingGroups.map((group) => {
+                  const isExpanded = expandedSpendingGroups.has(group.bucket.id)
+                  const groupName = group.bucket.isUngrouped ? t('groups.noGroup') : group.bucket.name
+                  const groupHasBudget = group.budget_amount != null && group.budget_amount > 0
+                  const groupPct = group.percentage_used
+                  const groupBarColor = groupHasBudget
+                    ? groupPct! > 100 ? 'bg-rose-500' : groupPct! >= 80 ? 'bg-amber-400' : 'bg-emerald-500'
                     : 'bg-muted-foreground/20'
 
                   return (
-                    <div
-                      key={item.category_id}
-                      className="rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => setDrillDown({
-                        title: t('dashboard.drillDownCategory', { category: item.category_name, month: monthLabelStr }),
-                        category_id: item.category_id,
-                        type: 'debit',
-                        from: monthStart,
-                        to: monthEnd,
-                      })}
-                    >
-                      <div className="flex items-center gap-3">
-                        <CategoryIcon icon={item.category_icon} color={item.category_color} size="lg" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-sm font-semibold text-foreground truncate">{item.category_name}</span>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-sm font-bold tabular-nums text-foreground">{mask(formatCurrency(item.actual, userCurrency, locale))}</span>
-                              {item.momPct !== null && (
-                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold tabular-nums ${
-                                  item.momPct > 0 ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400' : item.momPct < 0 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-muted text-muted-foreground'
-                                }`}>
-                                  {item.momPct > 0 ? '\u2191' : item.momPct < 0 ? '\u2193' : '='}{Math.abs(item.momPct).toFixed(0)}%
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {hasBudget && (
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-muted/60 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all ${barColor}`}
-                                  style={{ width: `${Math.min(pct!, 100)}%` }}
-                                />
-                              </div>
-                              <span className={`text-[11px] tabular-nums font-medium shrink-0 ${
-                                pct! > 100 ? 'text-rose-500' : pct! >= 80 ? 'text-amber-500' : 'text-muted-foreground'
-                              }`}>
-                                {mask(t('dashboard.ofBudget', { budget: formatCurrency(item.budget_amount!, userCurrency, locale) }))}
+                    <div key={group.bucket.id}>
+                      <div
+                        className="rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => setDrillDown({
+                          title: t('dashboard.drillDownCategory', { category: groupName, month: monthLabelStr }),
+                          category_ids: group.bucket.categoryIds,
+                          type: 'debit',
+                          from: monthStart,
+                          to: monthEnd,
+                        })}
+                      >
+                        <div className="flex items-center gap-3">
+                          <button
+                            className="p-1 -ml-1.5 -mr-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                            onClick={(e) => { e.stopPropagation(); toggleSpendingGroup(group.bucket.id) }}
+                            aria-label={groupName}
+                            aria-expanded={isExpanded}
+                          >
+                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                          </button>
+                          <CategoryIcon icon={group.bucket.icon} color={group.bucket.color} size="lg" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className="text-sm font-semibold text-foreground truncate">
+                                {groupName}
+                                <span className="ml-1.5 text-xs font-normal text-muted-foreground">({group.rows.length})</span>
                               </span>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-sm font-bold tabular-nums text-foreground">{mask(formatCurrency(group.actual, userCurrency, locale))}</span>
+                                {group.momPct !== null && (
+                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold tabular-nums ${
+                                    group.momPct > 0 ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400' : group.momPct < 0 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-muted text-muted-foreground'
+                                  }`}>
+                                    {group.momPct > 0 ? '\u2191' : group.momPct < 0 ? '\u2193' : '='}{Math.abs(group.momPct).toFixed(0)}%
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          )}
+                            {groupHasBudget && (
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-1.5 bg-muted/60 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${groupBarColor}`}
+                                    style={{ width: `${Math.min(groupPct!, 100)}%` }}
+                                  />
+                                </div>
+                                <span className={`text-[11px] tabular-nums font-medium shrink-0 ${
+                                  groupPct! > 100 ? 'text-rose-500' : groupPct! >= 80 ? 'text-amber-500' : 'text-muted-foreground'
+                                }`}>
+                                  {mask(t('dashboard.ofBudget', { budget: formatCurrency(group.budget_amount!, userCurrency, locale) }))}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      {isExpanded && (
+                        <div className="ml-5 pl-2 border-l border-border space-y-1">
+                          {group.rows.map((item) => {
+                            const hasBudget = item.budget_amount != null && item.budget_amount > 0
+                            const pct = item.percentage_used
+                            const barColor = hasBudget
+                              ? pct! > 100 ? 'bg-rose-500' : pct! >= 80 ? 'bg-amber-400' : 'bg-emerald-500'
+                              : 'bg-muted-foreground/20'
+
+                            return (
+                              <div
+                                key={item.category_id}
+                                className="rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
+                                onClick={() => setDrillDown({
+                                  title: t('dashboard.drillDownCategory', { category: item.category_name, month: monthLabelStr }),
+                                  category_id: item.category_id,
+                                  type: 'debit',
+                                  from: monthStart,
+                                  to: monthEnd,
+                                })}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <CategoryIcon icon={item.category_icon} color={item.category_color} size="lg" />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                      <span className="text-sm font-semibold text-foreground truncate">{item.category_name}</span>
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-sm font-bold tabular-nums text-foreground">{mask(formatCurrency(item.actual, userCurrency, locale))}</span>
+                                        {item.momPct !== null && (
+                                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold tabular-nums ${
+                                            item.momPct > 0 ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400' : item.momPct < 0 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-muted text-muted-foreground'
+                                          }`}>
+                                            {item.momPct > 0 ? '\u2191' : item.momPct < 0 ? '\u2193' : '='}{Math.abs(item.momPct).toFixed(0)}%
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {hasBudget && (
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-1.5 bg-muted/60 rounded-full overflow-hidden">
+                                          <div
+                                            className={`h-full rounded-full transition-all ${barColor}`}
+                                            style={{ width: `${Math.min(pct!, 100)}%` }}
+                                          />
+                                        </div>
+                                        <span className={`text-[11px] tabular-nums font-medium shrink-0 ${
+                                          pct! > 100 ? 'text-rose-500' : pct! >= 80 ? 'text-amber-500' : 'text-muted-foreground'
+                                        }`}>
+                                          {mask(t('dashboard.ofBudget', { budget: formatCurrency(item.budget_amount!, userCurrency, locale) }))}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
