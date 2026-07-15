@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import type { Budget } from '@/types'
-import { Pencil, Trash2, Plus, Repeat, CalendarIcon } from 'lucide-react'
+import { Pencil, Trash2, Plus, Repeat, CalendarIcon, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { MonthPicker } from '@/components/ui/monthpicker'
@@ -25,6 +25,8 @@ import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
+import { useToggleSet } from '@/hooks/use-toggle-set'
+import { buildCategoryGroupIndex, rollupByGroup } from '@/lib/category-groups'
 
 function formatCurrency(value: number, currency = 'USD', locale = 'en-US') {
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value)
@@ -115,6 +117,22 @@ export default function BudgetsPage() {
     },
   })
 
+  // Budgets rolled up by category group; expanding a group reveals its budgets.
+  const [expandedGroups, toggleGroup, setExpandedGroups] = useToggleSet()
+  const groupIndex = useMemo(
+    () => buildCategoryGroupIndex(groupsList, categoriesList),
+    [groupsList, categoriesList],
+  )
+  const budgetGroups = useMemo(() => {
+    const { groups } = rollupByGroup(budgetsList ?? [], (b) => b.category_id, groupIndex)
+    return groups.map(({ bucket, rows }) => ({
+      bucket,
+      rows,
+      total: rows.reduce((sum, b) => sum + b.amount, 0),
+    }))
+  }, [budgetsList, groupIndex])
+  const allExpanded = budgetGroups.every((g) => expandedGroups.has(g.bucket.id))
+
   const getCategoryDisplay = (categoryId: string) => {
     const cat = categoriesList?.find((c) => c.id === categoryId)
     if (!cat) return <span>{categoryId}</span>
@@ -181,11 +199,22 @@ export default function BudgetsPage() {
         <SectionHeader
           title={t('budgets.title')}
           action={
-            canWrite ? (
-              <Button size="sm" className="gap-1.5 h-8" onClick={() => { setEditing(null); setDialogOpen(true) }}>
-                <Plus size={13} /> {t('budgets.add')}
-              </Button>
-            ) : undefined
+            <div className="flex items-center gap-3">
+              {budgetGroups.length > 0 && (
+                <button
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setExpandedGroups(allExpanded ? new Set() : new Set(budgetGroups.map((g) => g.bucket.id)))}
+                >
+                  <ChevronsUpDown size={13} />
+                  {allExpanded ? t('categories.collapseAll') : t('categories.expandAll')}
+                </button>
+              )}
+              {canWrite && (
+                <Button size="sm" className="gap-1.5 h-8" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+                  <Plus size={13} /> {t('budgets.add')}
+                </Button>
+              )}
+            </div>
           }
         />
         {budgetsList && budgetsList.length > 0 ? (
@@ -198,42 +227,65 @@ export default function BudgetsPage() {
               </tr>
             </thead>
             <tbody>
-              {budgetsList.map((budget) => (
-                <tr key={budget.id} className="border-b border-border last:border-0 hover:bg-muted transition-colors">
-                  <td className="py-3 pl-4 sm:pl-5 text-sm font-medium text-foreground">
-                    <span className="flex items-center gap-1.5">
-                      {getCategoryDisplay(budget.category_id)}
-                      {budget.is_recurring && (
-                        <span title={t('budgets.recurringLabel')} className="text-muted-foreground">
-                          <Repeat size={12} />
+              {budgetGroups.map(({ bucket, rows, total }) => {
+                const isExpanded = expandedGroups.has(bucket.id)
+                const groupName = bucket.isUngrouped ? t('groups.noGroup') : bucket.name
+                return (
+                  <React.Fragment key={bucket.id}>
+                    <tr
+                      className="border-b border-border last:border-0 bg-muted/40 hover:bg-muted transition-colors cursor-pointer"
+                      onClick={() => toggleGroup(bucket.id)}
+                    >
+                      <td className="py-3 pl-4 sm:pl-5 text-sm font-semibold text-foreground">
+                        <span className="flex items-center gap-2">
+                          {isExpanded ? <ChevronDown size={14} className="text-muted-foreground shrink-0" /> : <ChevronRight size={14} className="text-muted-foreground shrink-0" />}
+                          <CategoryIcon icon={bucket.icon} color={bucket.color} size="sm" />
+                          <span style={bucket.isUngrouped ? undefined : { color: bucket.color }}>{groupName}</span>
+                          <span className="text-xs font-normal text-muted-foreground">({rows.length})</span>
                         </span>
-                      )}
-                    </span>
-                  </td>
-                  <td className="py-3 text-sm font-semibold tabular-nums text-foreground">{mask(formatCurrency(budget.amount, userCurrency, locale))}</td>
-                  {canWrite && (
-                    <td className="py-3 pr-4 sm:pr-5">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-                          onClick={() => { setEditing(budget); setDialogOpen(true) }}
-                          title={t('common.edit')}
-                        >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-colors"
-                          onClick={() => deleteMutation.mutate(budget.id)}
-                          disabled={deleteMutation.isPending}
-                          title={t('common.delete')}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
+                      </td>
+                      <td className="py-3 text-sm font-semibold tabular-nums text-foreground">{mask(formatCurrency(total, userCurrency, locale))}</td>
+                      {canWrite && <td className="py-3 pr-4 sm:pr-5" />}
+                    </tr>
+                    {isExpanded && rows.map((budget) => (
+                      <tr key={budget.id} className="border-b border-border last:border-0 hover:bg-muted transition-colors">
+                        <td className="py-3 pl-8 sm:pl-12 text-sm font-medium text-foreground">
+                          <span className="flex items-center gap-1.5">
+                            {getCategoryDisplay(budget.category_id)}
+                            {budget.is_recurring && (
+                              <span title={t('budgets.recurringLabel')} className="text-muted-foreground">
+                                <Repeat size={12} />
+                              </span>
+                            )}
+                          </span>
+                        </td>
+                        <td className="py-3 text-sm font-semibold tabular-nums text-foreground">{mask(formatCurrency(budget.amount, userCurrency, locale))}</td>
+                        {canWrite && (
+                          <td className="py-3 pr-4 sm:pr-5">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+                                onClick={() => { setEditing(budget); setDialogOpen(true) }}
+                                title={t('common.edit')}
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                                onClick={() => deleteMutation.mutate(budget.id)}
+                                disabled={deleteMutation.isPending}
+                                title={t('common.delete')}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                )
+              })}
             </tbody>
           </table>
         ) : (
