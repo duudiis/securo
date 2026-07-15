@@ -524,10 +524,9 @@ export default function AccountsPage() {
             </div>
           )}
 
-          {/* Import (merged from the former /import page) */}
-          <div className="pt-2">
-            <ImportSection />
-          </div>
+          {/* Import (merged from the former /import page) — a direct child so
+              the page's space-y-6 rhythm applies, no extra padding. */}
+          <ImportSection />
         </div>
       )}
 

@@ -576,8 +576,8 @@ export function ImportSection() {
         </div>
       )}
 
-      {/* Import History */}
-      <div className="mt-8">
+      {/* Import History — spacing comes from the section's space-y-6 */}
+      <div>
         <div className="flex items-center gap-2 mb-4">
           <History className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold text-foreground">{t('import.history')}</h2>
