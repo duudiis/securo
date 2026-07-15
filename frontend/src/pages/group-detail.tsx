@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ChevronDown,
+  ChevronRight,
   Link2,
   Receipt,
   TrendingDown,
@@ -28,9 +29,13 @@ import {
   groups as groupsApi,
   accounts as accountsApi,
   transactions as transactionsApi,
+  categories as categoriesApi,
+  categoryGroups as categoryGroupsApi,
   type GroupMemberPayload,
   type GroupSettlementPayload,
 } from '@/lib/api'
+import { useToggleSet } from '@/hooks/use-toggle-set'
+import { buildCategoryGroupIndex, rollupByGroup } from '@/lib/category-groups'
 import { MemberForm } from '@/components/member-form'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -547,6 +552,52 @@ export default function GroupDetailPage() {
     [categoryBreakdown],
   )
 
+  // Category distribution rolled up by category group; expanded groups show
+  // their member categories as individual slices/rows instead.
+  const { data: categoriesList } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoriesApi.list,
+  })
+  const { data: categoryGroupsList } = useQuery({
+    queryKey: ['categoryGroups'],
+    queryFn: categoryGroupsApi.list,
+  })
+  const [expandedBreakdownGroups, toggleBreakdownGroup] = useToggleSet()
+  const displayBreakdown = useMemo(() => {
+    type Entry = {
+      id: string
+      name: string
+      color: string
+      total: number
+      groupId?: string
+      memberOfGroupId?: string
+      count?: number
+    }
+    const index = buildCategoryGroupIndex(categoryGroupsList, categoriesList)
+    const { groups: grouped, uncategorized } = rollupByGroup(
+      categoryBreakdown,
+      (c) => (c.id === 'uncategorized' ? null : c.id),
+      index,
+    )
+    const entries: Entry[] = []
+    for (const { bucket, rows } of grouped) {
+      if (expandedBreakdownGroups.has(bucket.id)) {
+        entries.push(...rows.map((r) => ({ ...r, memberOfGroupId: bucket.id })))
+      } else {
+        entries.push({
+          id: `catgroup-${bucket.id}`,
+          name: bucket.isUngrouped ? t('groups.noGroup') : bucket.name,
+          color: bucket.color,
+          total: rows.reduce((s, r) => s + r.total, 0),
+          groupId: bucket.id,
+          count: rows.length,
+        })
+      }
+    }
+    entries.push(...uncategorized)
+    return entries.sort((a, b) => b.total - a.total)
+  }, [categoryBreakdown, categoryGroupsList, categoriesList, expandedBreakdownGroups, t])
+
   if (loadingGroup) {
     return (
       <div className="space-y-4">
@@ -646,28 +697,39 @@ export default function GroupDetailPage() {
           />
           <div className="px-4 py-3 space-y-3">
             <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
-              {categoryBreakdown.map((c) => {
+              {displayBreakdown.map((c) => {
                 const pct = (c.total / categoryBreakdownTotal) * 100
+                const toggleId = c.groupId ?? c.memberOfGroupId
                 return (
                   <div
                     key={c.id}
-                    style={{ width: `${pct}%`, backgroundColor: c.color }}
+                    style={{ width: `${pct}%`, backgroundColor: c.color, cursor: toggleId ? 'pointer' : undefined }}
                     title={`${c.name} · ${formatCurrency(c.total, groupCurrency, locale)} (${pct.toFixed(1)}%)`}
+                    onClick={toggleId ? () => toggleBreakdownGroup(toggleId) : undefined}
                   />
                 )
               })}
             </div>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
-              {categoryBreakdown.map((c) => {
+              {displayBreakdown.map((c) => {
                 const pct = (c.total / categoryBreakdownTotal) * 100
+                const toggleId = c.groupId ?? c.memberOfGroupId
                 return (
                   <li key={c.id} className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={`flex items-center gap-2 min-w-0 ${toggleId ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''} ${c.memberOfGroupId ? 'pl-4' : ''}`}
+                      onClick={toggleId ? () => toggleBreakdownGroup(toggleId) : undefined}
+                    >
                       <span
                         className="h-2.5 w-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: c.color }}
                       />
                       <span className="truncate">{c.name}</span>
+                      {c.count != null && (
+                        <span className="text-muted-foreground shrink-0">({c.count})</span>
+                      )}
+                      {c.groupId && <ChevronRight size={11} className="text-muted-foreground shrink-0" />}
+                      {c.memberOfGroupId && <ChevronDown size={11} className="text-muted-foreground shrink-0" />}
                     </span>
                     <span className="tabular-nums whitespace-nowrap text-muted-foreground">
                       {formatCurrency(c.total, groupCurrency, locale)} · {pct.toFixed(0)}%
