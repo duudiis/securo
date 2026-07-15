@@ -26,6 +26,9 @@
   --border: #E8ECF1;
   --input: #E8ECF1;
   --ring: #6366F1;
+  /* Universal hover highlight: translucent so it reads as the same subtle
+     step on every surface (card, popover, muted, background). */
+  --hover: rgba(15, 23, 42, 0.045);
   --radius: 0.625rem;
   --chart-1: #6366F1;
   --chart-2: #8B5CF6;
@@ -59,15 +62,18 @@
   --secondary-foreground: #F4F4F5;
   --muted: #2A2A2A;
   --muted-foreground: #A8ABB2;
-  /* Near-neutral: the previous #262638 indigo tint read as an odd purple on
-     skeletons, hovers and inputs against the gray surfaces. */
-  --accent: #232326;
+  /* Menu selection highlight: a clean step lighter than popover/card,
+     essentially neutral (the old indigo tint read purple on gray). */
+  --accent: #2E2E32;
   --accent-foreground: #A5B4FC;
   --destructive: #FB7185;
   --destructive-foreground: #141414;
   --border: #303030;
   --input: #303030;
   --ring: #818CF8;
+  /* Always LIGHTENS in dark mode, on any surface — absolute hover colors
+     ended up darker than some bases, which read broken. */
+  --hover: rgba(255, 255, 255, 0.05);
   --sidebar: #1E1E1E;
   --sidebar-foreground: #F4F4F5;
   --sidebar-primary: #818CF8;
@@ -101,6 +107,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-hover: var(--hover);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -171,11 +178,25 @@
   }
 }
 
-/* Theme switching: while .theme-transition is on <html> (added for the
-   duration of a toggle), every element animates its colors with ONE shared
-   timing — otherwise only elements that happen to have transition-colors
-   animate, each with its own duration, and the rest snap (glitchy mix of
-   instant tables/inputs and lagging buttons). */
+/* Theme switching uses the View Transitions API: the browser snapshots the
+   old screen and crossfades to the new one in the compositor — the entire UI
+   (sidebar, tables, inputs, charts) changes in ONE uniform fade with zero
+   per-element transitions to stagger or jank. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+  animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* Fallback for browsers without view transitions (Firefox): synchronize all
+   elements' color changes with one shared timing for the toggle duration. */
 .theme-transition,
 .theme-transition *,
 .theme-transition *::before,

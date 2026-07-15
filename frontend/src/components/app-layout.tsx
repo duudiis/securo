@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { flushSync } from 'react-dom'
 import { getAccountName } from '@/lib/account-utils'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -178,13 +179,23 @@ export function AppLayout() {
     : typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-color-scheme: dark)').matches
   const toggleTheme = () => {
-    // Synchronize every element's color change (see .theme-transition in
-    // index.css) — without it only transition-colors elements animate, each
-    // at its own pace, and everything else snaps.
-    const root = document.documentElement
-    root.classList.add('theme-transition')
-    setTheme(isDark ? 'light' : 'dark')
-    window.setTimeout(() => root.classList.remove('theme-transition'), 350)
+    const next = isDark ? 'light' : 'dark'
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
+    if (doc.startViewTransition) {
+      // One compositor-level crossfade of the whole screen — every element
+      // (sidebar, tables, inputs) switches in perfect sync. flushSync makes
+      // the theme class land inside the transition's snapshot callback.
+      doc.startViewTransition(() => {
+        flushSync(() => setTheme(next))
+      })
+    } else {
+      // Fallback (see .theme-transition in index.css): force one shared
+      // transition timing on every element for the toggle duration.
+      const root = document.documentElement
+      root.classList.add('theme-transition')
+      setTheme(next)
+      window.setTimeout(() => root.classList.remove('theme-transition'), 350)
+    }
   }
 
   const { data: accountsList } = useQuery({
@@ -216,7 +227,7 @@ export function AppLayout() {
         </button>
         <Link
           to="/"
-          className="flex items-center gap-2 -mx-1 px-1 py-1 rounded-md hover:bg-sidebar-accent transition-colors"
+          className="flex items-center gap-2 -mx-1 px-1 py-1 rounded-md hover:bg-hover transition-colors"
           aria-label={t('app.name')}
           title={t('nav.dashboard')}
         >
@@ -311,7 +322,7 @@ export function AppLayout() {
           <div className="flex h-16 min-h-16 items-center justify-between px-5 border-b border-sidebar-border shrink-0">
             <Link
               to="/"
-              className="flex items-center gap-2.5 -mx-1 px-1 py-1 rounded-md hover:bg-sidebar-accent transition-colors"
+              className="flex items-center gap-2.5 -mx-1 px-1 py-1 rounded-md hover:bg-hover transition-colors"
               onClick={() => setSidebarOpen(false)}
               aria-label={t('app.name')}
               title={t('nav.dashboard')}
@@ -324,7 +335,7 @@ export function AppLayout() {
             <div className="flex items-center gap-0.5">
               <button
                 onClick={togglePrivacyMode}
-                className="text-sidebar-muted hover:text-sidebar-foreground transition-colors p-1 rounded-md hover:bg-sidebar-accent"
+                className="text-sidebar-muted hover:text-sidebar-foreground transition-colors p-1 rounded-md hover:bg-hover"
                 title={privacyMode ? t('privacy.show') : t('privacy.hide')}
                 aria-label={privacyMode ? t('privacy.show') : t('privacy.hide')}
               >
@@ -336,7 +347,7 @@ export function AppLayout() {
               {agentsEnabled && (
                 <button
                   onClick={() => setChatOpen(true)}
-                  className="text-sidebar-muted hover:text-sidebar-foreground transition-colors p-1 rounded-md hover:bg-sidebar-accent"
+                  className="text-sidebar-muted hover:text-sidebar-foreground transition-colors p-1 rounded-md hover:bg-hover"
                   title={`${t('agents.globalChat.title', 'Chat')} (${isMac ? '⌘J' : 'Ctrl+J'})`}
                   aria-label={t('agents.globalChat.openHint', 'Open chat (⌘J)')}
                 >
@@ -345,7 +356,7 @@ export function AppLayout() {
               )}
               <button
                 onClick={toggleTheme}
-                className="text-sidebar-muted hover:text-sidebar-foreground transition-colors p-1 rounded-md hover:bg-sidebar-accent"
+                className="text-sidebar-muted hover:text-sidebar-foreground transition-colors p-1 rounded-md hover:bg-hover"
                 title={
                   isDark ? t('settings.themeLight') : t('settings.themeDark')
                 }
@@ -366,7 +377,7 @@ export function AppLayout() {
               className={cn(
                 'group flex w-full items-center gap-2 rounded-lg border border-sidebar-border/80 bg-sidebar-accent/40 px-3 py-2',
                 'text-[12.5px] text-sidebar-muted transition-all',
-                'hover:bg-sidebar-accent hover:text-sidebar-foreground hover:border-sidebar-border',
+                'hover:bg-hover hover:text-sidebar-foreground hover:border-sidebar-border',
               )}
               aria-label={t('cmdk.triggerAria')}
             >
@@ -412,7 +423,7 @@ export function AppLayout() {
                     'flex items-center gap-3 text-[13px] font-medium transition-all rounded-lg px-3 py-2',
                     isActive
                       ? 'bg-primary/[0.08] text-primary'
-                      : 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
+                      : 'text-sidebar-muted hover:bg-hover hover:text-sidebar-foreground',
                   )}
                 >
                   <Icon
@@ -468,7 +479,7 @@ export function AppLayout() {
                         key={acc.id}
                         to={`/accounts/${acc.id}`}
                         onClick={() => setSidebarOpen(false)}
-                        className="flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
+                        className="flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-sidebar-muted hover:bg-hover hover:text-sidebar-foreground transition-all"
                       >
                         <div className="truncate min-w-0">
                           <span className="block truncate font-medium">{getAccountName(acc)}</span>

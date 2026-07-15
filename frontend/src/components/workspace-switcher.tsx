@@ -149,7 +149,7 @@ export function WorkspaceSwitcher({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm hover:bg-sidebar-accent transition-colors text-left">
+          <button className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm hover:bg-hover transition-colors text-left">
             <CategoryIcon
               icon={workspaceIcon(current)}
               color={workspaceColor(current)}

@@ -725,7 +725,7 @@ function itemClasses() {
     'transition-colors',
     'data-[selected=true]:bg-primary/[0.08] data-[selected=true]:text-foreground',
     'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
-    'hover:bg-muted/40'
+    'hover:bg-hover'
   )
 }
 

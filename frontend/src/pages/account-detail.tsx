@@ -820,7 +820,7 @@ export default function AccountDetailPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center gap-2 min-w-[140px] border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground hover:bg-muted/50 transition-all cursor-pointer capitalize"
+                    className="inline-flex items-center justify-center gap-2 min-w-[140px] border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground hover:bg-hover transition-all cursor-pointer capitalize"
                   >
                     {activeBill
                       ? format(parseISO(activeBill.due_date + 'T00:00:00'), 'MMM yyyy', {
@@ -976,7 +976,7 @@ export default function AccountDetailPage() {
                       setFilterFrom(c.start)
                       setFilterTo(c.end)
                     }}
-                    className={`group flex-1 min-w-[60px] flex flex-col items-center gap-1.5 px-1 py-2 rounded-lg transition-colors ${isCurrent ? 'bg-rose-50 dark:bg-rose-500/10' : 'hover:bg-muted/50'}`}
+                    className={`group flex-1 min-w-[60px] flex flex-col items-center gap-1.5 px-1 py-2 rounded-lg transition-colors ${isCurrent ? 'bg-rose-50 dark:bg-rose-500/10' : 'hover:bg-hover'}`}
                   >
                     <div className="h-12 w-full flex items-end justify-center">
                       {c.loading ? (
@@ -1180,7 +1180,7 @@ export default function AccountDetailPage() {
                 <button
                   type="button"
                   onClick={() => setCcSettingsOpen(true)}
-                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
                   title={t('common.edit')}
                 >
                   <Pencil size={13} />
@@ -1359,7 +1359,7 @@ export default function AccountDetailPage() {
                     return (
                       <tr
                         key={tx.id}
-                        className={`border-b last:border-0 transition-colors ${isOpening ? 'bg-muted/60' : isPending ? 'opacity-60' : canWrite ? 'hover:bg-muted cursor-pointer' : ''}`}
+                        className={`border-b last:border-0 transition-colors ${isOpening ? 'bg-muted/60' : isPending ? 'opacity-60' : canWrite ? 'hover:bg-hover cursor-pointer' : ''}`}
                         onClick={() => {
                           if (!isOpening && canWrite) {
                             setEditingTx(tx)

@@ -181,7 +181,7 @@ export function OAuthConnectDialog({ open, onClose, provider, supportsAssetSync 
                 <button
                   key={code}
                   onClick={() => handleCountrySelect(code)}
-                  className="w-full flex items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:border-primary hover:bg-muted/50"
+                  className="w-full flex items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:border-primary hover:bg-hover"
                 >
                   <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
                     <Globe size={14} className="text-muted-foreground" />
@@ -205,7 +205,7 @@ export function OAuthConnectDialog({ open, onClose, provider, supportsAssetSync 
                 <button
                   key={`${inst.country}-${inst.name}`}
                   onClick={() => handleBankSelect(inst)}
-                  className="w-full flex items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:border-primary hover:bg-muted/50"
+                  className="w-full flex items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:border-primary hover:bg-hover"
                 >
                   <div className="w-8 h-8 rounded-md bg-muted overflow-hidden flex items-center justify-center shrink-0">
                     {inst.logo ? (

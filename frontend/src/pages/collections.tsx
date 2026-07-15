@@ -92,7 +92,7 @@ export default function CollectionsPage() {
         ) : (
           <div className="divide-y divide-border/40">
             {list.map((c) => (
-              <div key={c.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors">
+              <div key={c.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-hover transition-colors">
                 <span className="h-8 w-8 shrink-0 rounded-lg" style={{ backgroundColor: `${c.color}22` }}>
                   <span className="flex h-full w-full items-center justify-center">
                     <FolderOpen size={16} style={{ color: c.color }} />
@@ -227,7 +227,7 @@ function CollectionDialog({
                 <p className="px-3 py-3 text-xs text-muted-foreground">{t('collections.noAccounts')}</p>
               ) : (
                 accounts.map((a) => (
-                  <label key={a.id} className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-muted/40">
+                  <label key={a.id} className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-hover">
                     <input
                       type="checkbox"
                       checked={selected.has(a.id)}
@@ -248,7 +248,7 @@ function CollectionDialog({
               <Label>{t('collections.wallets')}</Label>
               <div className="max-h-44 overflow-y-auto rounded-lg border border-border/60 divide-y divide-border/40">
                 {wallets.map((w) => (
-                  <label key={w.id} className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-muted/40">
+                  <label key={w.id} className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-hover">
                     <input
                       type="checkbox"
                       checked={selectedWallets.has(w.id)}

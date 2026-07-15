@@ -166,7 +166,7 @@ export default function GroupsPage() {
             {visibleGroups.map((group) => (
               <li
                 key={group.id}
-                className="flex items-center gap-3 px-4 py-3.5 hover:bg-muted cursor-pointer transition-colors"
+                className="flex items-center gap-3 px-4 py-3.5 hover:bg-hover cursor-pointer transition-colors"
                 onClick={() => navigate(`/groups/${group.id}`)}
               >
                 {/* Avatar circle — colored using the group's `color` field */}

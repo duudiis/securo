@@ -211,7 +211,7 @@ export function TransactionDrillDown({
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-hover text-muted-foreground hover:text-foreground transition-colors shrink-0"
             title={t('common.close')}
           >
             <X size={16} />
@@ -242,7 +242,7 @@ export function TransactionDrillDown({
               {displayItems.map((item) => (
                 <div
                   key={item.key}
-                  className={`flex items-center gap-3 px-5 py-3 hover:bg-muted transition-colors ${!item.isProjected ? 'cursor-pointer' : ''}`}
+                  className={`flex items-center gap-3 px-5 py-3 hover:bg-hover transition-colors ${!item.isProjected ? 'cursor-pointer' : ''}`}
                   onClick={() => {
                     if (!item.isProjected && item.transaction) {
                       onTransactionClick?.(item.transaction)

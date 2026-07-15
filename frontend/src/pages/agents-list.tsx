@@ -81,7 +81,7 @@ export default function AgentsListPage() {
             {list?.map((a) => (
               <div
                 key={a.id}
-                className="group flex items-center gap-3 px-4 sm:px-5 py-4 hover:bg-muted transition-colors"
+                className="group flex items-center gap-3 px-4 sm:px-5 py-4 hover:bg-hover transition-colors"
               >
                 <Link to={`/agents/${a.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                   <div

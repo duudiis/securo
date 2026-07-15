@@ -91,7 +91,7 @@ export default function AgentConnectionsPage() {
               return (
                 <div
                   key={c.id}
-                  className="flex items-start gap-3 px-4 sm:px-5 py-4 hover:bg-muted/50 transition-colors"
+                  className="flex items-start gap-3 px-4 sm:px-5 py-4 hover:bg-hover transition-colors"
                 >
                   <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center shrink-0">
                     <Plug className="h-5 w-5 text-muted-foreground" />

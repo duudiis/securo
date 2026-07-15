@@ -69,7 +69,7 @@ export function ConnectorSelectDialog({ open, onClose, onSelect }: ConnectorSele
                 }}
                 className={`w-full flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
                   p.configured
-                    ? 'border-border hover:border-primary hover:bg-muted/50 cursor-pointer'
+                    ? 'border-border hover:border-primary hover:bg-hover cursor-pointer'
                     : 'border-border/50 opacity-60 cursor-not-allowed'
                 }`}
               >

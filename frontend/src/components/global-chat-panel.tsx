@@ -200,7 +200,7 @@ export function GlobalChatPanel({ open, onOpenChange }: Props) {
                     aria-label={t('agents.globalChat.selectAgent', 'Select agent')}
                     className={cn(
                       'h-8 gap-1.5 border-0 bg-transparent shadow-none focus-visible:ring-0',
-                      'px-2 -ml-1 hover:bg-muted text-sm font-medium',
+                      'px-2 -ml-1 hover:bg-hover text-sm font-medium',
                       'data-[size=default]:h-8',
                     )}
                   >
@@ -406,7 +406,7 @@ function ConversationRow({
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full text-left px-3 py-2.5 hover:bg-muted transition-colors flex flex-col gap-0.5',
+        'w-full text-left px-3 py-2.5 hover:bg-hover transition-colors flex flex-col gap-0.5',
         isActive && 'bg-muted',
       )}
     >

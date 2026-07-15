@@ -1313,7 +1313,7 @@ export default function TransactionsPage() {
                 <TableRow
                   key={tx.id}
                   ref={tx.id === highlightId ? highlightedRowRef : undefined}
-                  className={`hover:bg-muted border-b border-border last:border-0 ${
+                  className={`hover:bg-hover border-b border-border last:border-0 ${
                     selectedIds.has(tx.id) ? 'bg-primary/5' : ''
                   } ${tx.is_shared || !canWrite ? 'cursor-default' : 'cursor-pointer'}`}
                   onClick={() => {
@@ -1514,7 +1514,7 @@ export default function TransactionsPage() {
               allowNone
               emptyShowsPlaceholder
               disabled={bulkCategorizeMutation.isPending}
-              className="w-44 md:w-56 h-auto py-2 border-transparent bg-transparent hover:bg-muted/60 focus:bg-muted/60 focus-visible:ring-0"
+              className="w-44 md:w-56 h-auto py-2 border-transparent bg-transparent hover:bg-hover focus:bg-muted/60 focus-visible:ring-0"
               contentProps={{ side: 'top', sideOffset: 8 }}
             />
 
@@ -1608,7 +1608,7 @@ export default function TransactionsPage() {
             {/* Close */}
             <button
               onClick={() => { setSelectedIds(new Set()); setBulkCategory(''); setBulkTagInput('') }}
-              className="text-muted-foreground hover:text-foreground p-2 shrink-0 self-center rounded-lg hover:bg-muted/60"
+              className="text-muted-foreground hover:text-foreground p-2 shrink-0 self-center rounded-lg hover:bg-hover"
               title={t('common.close', 'Close')}
             >
               <X size={16} />

@@ -181,7 +181,7 @@ function RecurringTab() {
             </thead>
             <tbody>
               {recurringList.map((rt) => (
-                <tr key={rt.id} className="border-b border-border last:border-0 hover:bg-muted transition-colors">
+                <tr key={rt.id} className="border-b border-border last:border-0 hover:bg-hover transition-colors">
                   <td className="py-3 pl-4 sm:pl-5 text-sm font-medium text-foreground">{rt.description}</td>
                   <td className={`py-3 text-xs sm:text-sm font-bold tabular-nums ${rt.type === 'credit' ? 'text-emerald-600' : 'text-rose-500'}`}>
                     {mask(`${rt.type === 'credit' ? '+' : '−'}${formatCurrency(rt.amount, rt.currency, locale)}`)}

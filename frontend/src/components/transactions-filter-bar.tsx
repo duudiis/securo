@@ -264,7 +264,7 @@ export function TransactionsFilterBar({
             <button
               type="button"
               onClick={onClearAll}
-              className="hidden h-7 items-center rounded-md px-2 text-[11.5px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:inline-flex"
+              className="hidden h-7 items-center rounded-md px-2 text-[11.5px] font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground md:inline-flex"
             >
               {t('transactions.clearFilters')}
             </button>
@@ -285,7 +285,7 @@ export function TransactionsFilterBar({
                 aria-label={t('transactions.filtersBar.filters')}
                 className={cn(
                   'inline-flex h-8 items-center gap-1.5 rounded-md border border-border/80 bg-background px-2.5 text-[12px] font-medium text-muted-foreground transition-colors',
-                  'hover:bg-muted hover:text-foreground',
+                  'hover:bg-hover hover:text-foreground',
                   menuOpen && 'bg-muted text-foreground',
                   hasAnyFilter && 'border-primary/30 text-primary hover:text-primary',
                 )}

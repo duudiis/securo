@@ -957,7 +957,7 @@ function TransactionForm({
               {effectiveBillDate && (
                 <button
                   type="button"
-                  className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
+                  className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors shrink-0"
                   onClick={() => setEffectiveBillDate('')}
                   title={t('transactions.clearOverride', 'Remover sobrescrição')}
                 >
@@ -1480,7 +1480,7 @@ function PendingAttachmentsSection({
               className={`w-full mt-2 rounded-lg border-2 border-dashed py-3 flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 ${
                 dragOver
                   ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-muted-foreground/40 hover:bg-muted/30'
+                  : 'border-border hover:border-muted-foreground/40 hover:bg-hover'
               }`}
               onDragOver={(e) => { e.preventDefault(); onDragOver() }}
               onDragLeave={onDragLeave}

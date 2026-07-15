@@ -226,7 +226,7 @@ export function LinkTransferDialog({
                         <button
                           type="button"
                           onClick={() => setPickedCandidate(c)}
-                          className="w-full text-left rounded-lg border border-border bg-card hover:bg-muted/50 hover:border-primary/40 transition-colors p-3 flex items-center gap-3 min-w-0"
+                          className="w-full text-left rounded-lg border border-border bg-card hover:bg-hover hover:border-primary/40 transition-colors p-3 flex items-center gap-3 min-w-0"
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 min-w-0">

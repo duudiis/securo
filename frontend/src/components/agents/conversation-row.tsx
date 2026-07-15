@@ -86,7 +86,7 @@ export function ConversationRow({ conv, agentId, active, onPick, onDeleted }: Pr
         <button
           type="button"
           onClick={submitRename}
-          className="p-1 rounded hover:bg-background text-emerald-600"
+          className="p-1 rounded hover:bg-hover text-emerald-600"
           title={t('agents.conversation.save')}
         >
           <Check className="h-3.5 w-3.5" />
@@ -97,7 +97,7 @@ export function ConversationRow({ conv, agentId, active, onPick, onDeleted }: Pr
             setDraft(conv.title || '')
             setEditing(false)
           }}
-          className="p-1 rounded hover:bg-background text-muted-foreground"
+          className="p-1 rounded hover:bg-hover text-muted-foreground"
           title={t('agents.conversation.cancel')}
         >
           <X className="h-3.5 w-3.5" />
@@ -109,7 +109,7 @@ export function ConversationRow({ conv, agentId, active, onPick, onDeleted }: Pr
   return (
     <div
       className={cn(
-        'group flex items-center px-3 py-2 text-sm hover:bg-muted',
+        'group flex items-center px-3 py-2 text-sm hover:bg-hover',
         active && 'bg-muted',
       )}
     >
@@ -131,7 +131,7 @@ export function ConversationRow({ conv, agentId, active, onPick, onDeleted }: Pr
             e.stopPropagation()
             setEditing(true)
           }}
-          className="p-1 rounded hover:bg-background text-muted-foreground"
+          className="p-1 rounded hover:bg-hover text-muted-foreground"
           title={t('agents.conversation.rename')}
         >
           <Pencil className="h-3 w-3" />
@@ -144,7 +144,7 @@ export function ConversationRow({ conv, agentId, active, onPick, onDeleted }: Pr
               deleteMut.mutate()
             }
           }}
-          className="p-1 rounded hover:bg-background text-rose-500"
+          className="p-1 rounded hover:bg-hover text-rose-500"
           title={t('agents.conversation.delete')}
           disabled={deleteMut.isPending}
         >

@@ -285,7 +285,7 @@ export default function GoalsPage() {
 
               const GoalIcon = getGoalIcon(goal.icon)
               return (
-                <div key={goal.id} className="px-4 sm:px-5 py-4 hover:bg-muted/50 transition-colors">
+                <div key={goal.id} className="px-4 sm:px-5 py-4 hover:bg-hover transition-colors">
                   <div className="flex items-start gap-4">
                     {/* Icon */}
                     <div
@@ -382,7 +382,7 @@ export default function GoalsPage() {
                         )}
                         {goal.status !== 'archived' && (
                           <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-muted-foreground/80 hover:bg-muted transition-colors"
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-muted-foreground/80 hover:bg-hover transition-colors"
                             onClick={() => statusMutation.mutate({ id: goal.id, status: 'archived' })}
                             title={t('goals.archive')}
                           >
@@ -570,7 +570,7 @@ export default function GoalsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full flex items-center gap-3 border border-border rounded-lg px-3 py-2 text-sm bg-card hover:bg-muted/50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 border border-border rounded-lg px-3 py-2 text-sm bg-card hover:bg-hover transition-colors text-left"
                   >
                     <div
                       className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-white"

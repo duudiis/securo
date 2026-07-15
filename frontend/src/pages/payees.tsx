@@ -320,7 +320,7 @@ export default function PayeesPage() {
                   setFilterType('')
                   setFilterFavorites(false)
                 }}
-                className="hidden h-7 items-center rounded-md px-2 text-[11.5px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:inline-flex"
+                className="hidden h-7 items-center rounded-md px-2 text-[11.5px] font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground md:inline-flex"
               >
                 {t('transactions.clearFilters')}
               </button>
@@ -332,7 +332,7 @@ export default function PayeesPage() {
                   type="button"
                   className={cn(
                     'inline-flex h-8 items-center gap-1.5 rounded-md border border-border/80 bg-background px-2.5 text-[12px] font-medium text-muted-foreground transition-colors',
-                    'hover:bg-muted hover:text-foreground',
+                    'hover:bg-hover hover:text-foreground',
                     (filterType || filterFavorites) && 'border-primary/30 text-primary hover:text-primary',
                   )}
                 >
@@ -346,7 +346,7 @@ export default function PayeesPage() {
                 </DropdownMenuLabel>
                 
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="gap-2 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-muted transition-colors">
+                  <DropdownMenuSubTrigger className="gap-2 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-hover transition-colors">
                     <ListFilter size={13} className="text-muted-foreground shrink-0" />
                     <span className="flex-1 text-left">{t('payees.type')}</span>
                     {filterType && (
@@ -367,7 +367,7 @@ export default function PayeesPage() {
                           key={opt.value || 'all'}
                           onSelect={() => setFilterType(opt.value)}
                           className={cn(
-                            'gap-2 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-muted transition-colors',
+                            'gap-2 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-hover transition-colors',
                             filterType === opt.value && 'bg-primary/5 text-primary hover:bg-primary/5',
                           )}
                         >
@@ -386,7 +386,7 @@ export default function PayeesPage() {
                 <DropdownMenuCheckboxItem
                   checked={filterFavorites}
                   onCheckedChange={setFilterFavorites}
-                  className="gap-2 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-muted transition-colors"
+                  className="gap-2 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-hover transition-colors"
                 >
                   <Star size={13} className={cn("mr-1 shrink-0", filterFavorites ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
                   <span className="flex-1 text-left">{t('payees.favoritesOnly')}</span>
@@ -400,7 +400,7 @@ export default function PayeesPage() {
                         setFilterType('')
                         setFilterFavorites(false)
                       }}
-                      className="gap-2 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-muted text-destructive hover:text-destructive focus:text-destructive focus:bg-destructive/5 font-medium"
+                      className="gap-2 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-hover text-destructive hover:text-destructive focus:text-destructive focus:bg-destructive/5 font-medium"
                     >
                       <X size={13} className="mr-1 shrink-0" />
                       <span>{t('transactions.clearFilters')}</span>
@@ -481,7 +481,7 @@ export default function PayeesPage() {
               {filtered.map((payee) => (
                 <TableRow
                   key={payee.id}
-                  className={`cursor-pointer hover:bg-muted border-b border-border last:border-0 ${
+                  className={`cursor-pointer hover:bg-hover border-b border-border last:border-0 ${
                     summaryPayee === payee.id ? 'bg-muted/80 font-medium' : selectedIds.has(payee.id) ? 'bg-primary/5' : ''
                   }`}
                   onClick={() => {

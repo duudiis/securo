@@ -318,7 +318,7 @@ export default function WorkspaceSettingsPage() {
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className="h-10 w-10 rounded-lg border border-input flex items-center justify-center hover:bg-muted/40 transition-colors shrink-0"
+                        className="h-10 w-10 rounded-lg border border-input flex items-center justify-center hover:bg-hover transition-colors shrink-0"
                         title={t('workspace.icon', 'Ícone')}
                       >
                         <CategoryIcon icon={editIcon} color={editColor} size="sm" />
@@ -447,7 +447,7 @@ export default function WorkspaceSettingsPage() {
               return (
                 <li
                   key={m.id}
-                  className="py-3 px-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+                  className="py-3 px-4 flex items-center gap-3 hover:bg-hover transition-colors"
                 >
                   <Avatar className="h-9 w-9">
                     <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold">

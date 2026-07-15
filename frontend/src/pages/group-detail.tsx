@@ -914,7 +914,7 @@ export default function GroupDetailPage() {
             {groupTxs.slice(0, 8).map((tx) => (
               <li
                 key={tx.id}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-muted cursor-pointer transition-colors"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-hover cursor-pointer transition-colors"
                 onClick={() => navigate(`/transactions?group_id=${groupId}&highlight=${tx.id}`)}
               >
                 <CategoryIcon
@@ -1172,7 +1172,7 @@ export default function GroupDetailPage() {
                                   setSettleDate(tx.date)
                                 }}
                                 className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-3 ${
-                                  picked ? 'bg-primary/10' : 'hover:bg-muted/50'
+                                  picked ? 'bg-primary/10' : 'hover:bg-hover'
                                 }`}
                               >
                                 <span className="min-w-0 truncate">

@@ -117,7 +117,7 @@ export function DateRangeFilter({
         <button
           type="button"
           className={cn(
-            'inline-flex h-8 items-center justify-center gap-2 border border-border rounded-lg px-3 text-sm bg-card text-foreground hover:bg-muted/50 transition-all cursor-pointer',
+            'inline-flex h-8 items-center justify-center gap-2 border border-border rounded-lg px-3 text-sm bg-card text-foreground hover:bg-hover transition-all cursor-pointer',
             className,
           )}
         >
@@ -139,7 +139,7 @@ export function DateRangeFilter({
                   'px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors cursor-pointer',
                   activeTab === tab
                     ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                    : 'text-muted-foreground hover:text-foreground hover:bg-hover',
                 )}
               >
                 {tab === 'month' ? t('dateFilter.tabMonth')
@@ -184,7 +184,7 @@ export function DateRangeFilter({
                     'px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors text-left',
                     isActivePreset(preset.value)
                       ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-foreground hover:bg-muted/50',
+                      : 'border-border text-foreground hover:bg-hover',
                   )}
                 >
                   {formatDateFilterValue(preset.value, t, dateLocale)}

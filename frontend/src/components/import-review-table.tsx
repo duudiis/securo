@@ -160,7 +160,7 @@ export function ImportReviewTable({
               return (
                 <TableRow
                   key={tx._id}
-                  className={`border-b border-border last:border-0 hover:bg-muted ${tx.excluded ? 'opacity-50' : ''}`}
+                  className={`border-b border-border last:border-0 hover:bg-hover ${tx.excluded ? 'opacity-50' : ''}`}
                 >
                   <TableCell className="py-2.5 pl-4">
                     <input

@@ -147,7 +147,7 @@ export function CategoryFilterContent({
                 </span>
                 <button
                   type="button"
-                  className="p-0.5 -mr-0.5 rounded hover:bg-muted text-muted-foreground shrink-0"
+                  className="p-0.5 -mr-0.5 rounded hover:bg-hover text-muted-foreground shrink-0"
                   onPointerDown={(e) => { e.preventDefault(); e.stopPropagation() }}
                   onClick={(e) => {
                     e.preventDefault()

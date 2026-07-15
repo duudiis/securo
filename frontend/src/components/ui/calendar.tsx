@@ -127,7 +127,7 @@ function Calendar({
         <button
           type="button"
           onClick={goPrev}
-          className="size-7 inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          className="size-7 inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
         >
           <ChevronLeftIcon className="size-4" />
         </button>
@@ -137,7 +137,7 @@ function Calendar({
           disabled={view === 'years'}
           className={cn(
             'text-sm font-medium text-foreground capitalize px-2 py-1 rounded-md transition-colors',
-            view !== 'years' && 'hover:bg-muted/60 cursor-pointer',
+            view !== 'years' && 'hover:bg-hover cursor-pointer',
             view === 'years' && 'cursor-default',
           )}
         >
@@ -146,7 +146,7 @@ function Calendar({
         <button
           type="button"
           onClick={goNext}
-          className="size-7 inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          className="size-7 inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
         >
           <ChevronRightIcon className="size-4" />
         </button>
@@ -187,7 +187,7 @@ function Calendar({
                         isStart && to && !isSameDay(from!, to) && 'rounded-r-none',
                         isEnd && to && from && !isSameDay(from, to) && 'rounded-l-none',
                         !inMonth && !inRange && !isStart && !isEnd && 'text-muted-foreground/40',
-                        inMonth && !isStart && !isEnd && !inRange && 'text-foreground hover:bg-muted/60',
+                        inMonth && !isStart && !isEnd && !inRange && 'text-foreground hover:bg-hover',
                         today && !isStart && !isEnd && !inRange && 'bg-accent text-accent-foreground font-medium',
                         inRange && 'bg-primary/15 text-foreground',
                         (isStart || isEnd) && 'bg-primary text-primary-foreground font-semibold',
@@ -207,7 +207,7 @@ function Calendar({
                     className={cn(
                       'size-8 inline-flex items-center justify-center rounded-lg text-sm transition-colors',
                       !inMonth && 'text-muted-foreground/40',
-                      inMonth && !isSelected && 'text-foreground hover:bg-muted/60',
+                      inMonth && !isSelected && 'text-foreground hover:bg-hover',
                       today && !isSelected && 'bg-accent text-accent-foreground font-medium',
                       isSelected && 'bg-primary text-primary-foreground font-semibold',
                     )}
@@ -241,7 +241,7 @@ function Calendar({
                   'h-10 rounded-lg text-sm capitalize transition-colors',
                   isCurrent
                     ? 'bg-primary text-primary-foreground font-semibold'
-                    : 'text-foreground hover:bg-muted/60',
+                    : 'text-foreground hover:bg-hover',
                 )}
               >
                 {format(monthDate, 'MMM', { locale })}
@@ -268,7 +268,7 @@ function Calendar({
                   'h-10 rounded-lg text-sm transition-colors',
                   isCurrent
                     ? 'bg-primary text-primary-foreground font-semibold'
-                    : 'text-foreground hover:bg-muted/60',
+                    : 'text-foreground hover:bg-hover',
                 )}
               >
                 {y}

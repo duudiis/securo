@@ -31,7 +31,7 @@ export function TransactionsColumnPicker({ state }: Props) {
             return (
               <li key={col.id}>
                 <label
-                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted ${
+                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-hover ${
                     disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
                   }`}
                 >
@@ -52,7 +52,7 @@ export function TransactionsColumnPicker({ state }: Props) {
           <button
             type="button"
             onClick={() => state.resetColumns()}
-            className="w-full rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="w-full rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-hover hover:text-foreground"
           >
             {t('transactions.resetColumns')}
           </button>

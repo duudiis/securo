@@ -42,7 +42,7 @@ function DatePickerInput({
           type="button"
           disabled={disabled}
           className={cn(
-            'inline-flex items-center gap-2 border border-border rounded-lg px-3 py-2 text-sm bg-card text-foreground hover:bg-muted/50 transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none min-w-[120px]',
+            'inline-flex items-center gap-2 border border-border rounded-lg px-3 py-2 text-sm bg-card text-foreground hover:bg-hover transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none min-w-[120px]',
             !value && 'text-muted-foreground',
             className,
           )}

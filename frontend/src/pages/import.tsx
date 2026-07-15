@@ -587,7 +587,7 @@ export function ImportSection() {
               className={`ml-auto h-7 w-7 inline-flex items-center justify-center rounded-md border transition-colors ${
                 dragOver
                   ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                  : 'border-border text-muted-foreground hover:text-foreground hover:bg-hover'
               }`}
               title={t('import.addFiles')}
               aria-label={t('import.addFiles')}
@@ -619,7 +619,7 @@ export function ImportSection() {
               </thead>
               <tbody className="divide-y divide-border">
                 {importHistory.map((log) => (
-                  <tr key={log.id} className="hover:bg-muted">
+                  <tr key={log.id} className="hover:bg-hover">
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                       {new Date(log.created_at).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })}
                     </td>

@@ -545,7 +545,7 @@ export function TransactionAttachments({
           className={`w-full mt-2 rounded-lg border-2 border-dashed py-3 flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 ${
             dragOver
               ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-muted-foreground/40 hover:bg-muted/30'
+              : 'border-border hover:border-muted-foreground/40 hover:bg-hover'
           }`}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
           onDragLeave={() => setDragOver(false)}

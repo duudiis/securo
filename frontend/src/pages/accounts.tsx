@@ -267,7 +267,7 @@ export default function AccountsPage() {
                   const dueClass = dueIn != null && dueIn <= 3 ? 'text-amber-600' : 'text-muted-foreground'
                   const accountMask = formatAccountMask(acc)
                   return (
-                    <div key={acc.id} className="group flex items-center px-5 py-3 hover:bg-muted/50 transition-colors">
+                    <div key={acc.id} className="group flex items-center px-5 py-3 hover:bg-hover transition-colors">
                       <Link to={`/accounts/${acc.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                         <AccountIcon account={acc} />
                         <div className="min-w-0 flex-1">
@@ -282,7 +282,7 @@ export default function AccountsPage() {
                       {canWrite && (
                         <div className="flex items-center gap-1 mr-3 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
                             onClick={() => { setEditingAccount(acc); setDialogOpen(true) }}
                             title={t('common.edit')}
                           >
@@ -423,7 +423,7 @@ export default function AccountsPage() {
                           const dueClass = dueIn != null && dueIn <= 3 ? 'text-amber-600' : 'text-muted-foreground'
                           const accountMask = formatAccountMask(acc)
                           return (
-                            <div key={acc.id} className="group flex items-center px-5 py-3 hover:bg-muted/50 transition-colors">
+                            <div key={acc.id} className="group flex items-center px-5 py-3 hover:bg-hover transition-colors">
                               <Link to={`/accounts/${acc.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                                 <AccountIcon account={acc} />
                                 <div className="min-w-0 flex-1">
@@ -438,7 +438,7 @@ export default function AccountsPage() {
                               {canWrite && (
                                 <div className="flex items-center gap-1 mr-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button
-                                    className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                    className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
                                     onClick={(e) => { e.preventDefault(); setEditingAccount(acc); setDialogOpen(true) }}
                                     title={t('common.edit')}
                                   >
@@ -829,7 +829,7 @@ function AccountDialog({
                   <p className="text-xs text-muted-foreground">{t('accounts.typeResetPendingNote')}</p>
                   <button
                     type="button"
-                    className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                    className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors shrink-0"
                     onClick={() => setResetType(false)}
                     title={t('common.cancel')}
                   >

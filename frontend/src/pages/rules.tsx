@@ -372,7 +372,7 @@ export default function RulesPage() {
                 'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
                 sortBy === opt
                   ? 'bg-background border border-border text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-background/60'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-hover'
               )}
             >
               {t(`rules.sortBy_${opt}`)}
@@ -388,7 +388,7 @@ export default function RulesPage() {
               <div
                 key={rule.id}
                 className={cn(
-                  'px-4 sm:px-5 py-3 hover:bg-muted transition-colors',
+                  'px-4 sm:px-5 py-3 hover:bg-hover transition-colors',
                   canWrite && 'cursor-pointer',
                 )}
                 onClick={() => { if (canWrite) openEdit(rule) }}

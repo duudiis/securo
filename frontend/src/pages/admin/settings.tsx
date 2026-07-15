@@ -317,7 +317,7 @@ export default function AdminSettingsPage() {
               <button
                 key={u.id}
                 onClick={() => openEdit(u)}
-                className="flex items-center gap-4 w-full px-5 py-3.5 text-left hover:bg-muted/40 transition-colors"
+                className="flex items-center gap-4 w-full px-5 py-3.5 text-left hover:bg-hover transition-colors"
               >
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarFallback className={u.is_superuser ? 'bg-primary/15 text-primary text-xs font-semibold' : 'bg-muted text-muted-foreground text-xs font-semibold'}>
@@ -437,7 +437,7 @@ export default function AdminSettingsPage() {
             type="button"
             onClick={() => updateAccountingModeMutation.mutate('cash')}
             disabled={updateAccountingModeMutation.isPending}
-            className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-muted/40 transition-colors"
+            className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-hover transition-colors"
           >
             <div className={`mt-0.5 h-4 w-4 rounded-full border-2 shrink-0 ${accountingMode === 'cash' ? 'border-primary bg-primary' : 'border-muted-foreground/40'}`}>
               {accountingMode === 'cash' && <div className="h-full w-full rounded-full bg-primary ring-2 ring-background ring-inset" />}
@@ -451,7 +451,7 @@ export default function AdminSettingsPage() {
             type="button"
             onClick={() => updateAccountingModeMutation.mutate('accrual')}
             disabled={updateAccountingModeMutation.isPending}
-            className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-muted/40 transition-colors"
+            className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-hover transition-colors"
           >
             <div className={`mt-0.5 h-4 w-4 rounded-full border-2 shrink-0 ${accountingMode === 'accrual' ? 'border-primary bg-primary' : 'border-muted-foreground/40'}`}>
               {accountingMode === 'accrual' && <div className="h-full w-full rounded-full bg-primary ring-2 ring-background ring-inset" />}
@@ -516,7 +516,7 @@ export default function AdminSettingsPage() {
                 type="button"
                 onClick={() => updateNumberFormatMutation.mutate(opt.value)}
                 disabled={updateNumberFormatMutation.isPending}
-                className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-muted/40 transition-colors"
+                className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-hover transition-colors"
               >
                 <div className={`mt-0.5 h-4 w-4 rounded-full border-2 shrink-0 ${numberFormat === opt.value ? 'border-primary bg-primary' : 'border-muted-foreground/40'}`}>
                   {numberFormat === opt.value && <div className="h-full w-full rounded-full bg-primary ring-2 ring-background ring-inset" />}
@@ -564,7 +564,7 @@ export default function AdminSettingsPage() {
                 type="button"
                 onClick={() => updateDateFormatMutation.mutate(opt.value)}
                 disabled={updateDateFormatMutation.isPending}
-                className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-muted/40 transition-colors"
+                className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-hover transition-colors"
               >
                 <div className={`mt-0.5 h-4 w-4 rounded-full border-2 shrink-0 ${dateFormat === opt.value ? 'border-primary bg-primary' : 'border-muted-foreground/40'}`}>
                   {dateFormat === opt.value && <div className="h-full w-full rounded-full bg-primary ring-2 ring-background ring-inset" />}

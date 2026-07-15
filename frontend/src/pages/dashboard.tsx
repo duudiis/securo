@@ -806,7 +806,7 @@ export default function DashboardPage() {
                   return (
                     <div key={group.bucket.id}>
                       <div
-                        className="rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
+                        className="rounded-lg px-3 py-2.5 hover:bg-hover transition-colors cursor-pointer"
                         onClick={() => setDrillDown({
                           title: t('dashboard.drillDownCategory', { category: groupName, month: monthLabelStr }),
                           category_ids: group.bucket.categoryIds,
@@ -817,7 +817,7 @@ export default function DashboardPage() {
                       >
                         <div className="flex items-center gap-3">
                           <button
-                            className="p-1 -ml-1.5 -mr-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                            className="p-1 -ml-1.5 -mr-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors shrink-0"
                             onClick={(e) => { e.stopPropagation(); toggleSpendingGroup(group.bucket.id) }}
                             aria-label={groupName}
                             aria-expanded={isExpanded}
@@ -872,7 +872,7 @@ export default function DashboardPage() {
                             return (
                               <div
                                 key={item.category_id}
-                                className="rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
+                                className="rounded-lg px-3 py-2.5 hover:bg-hover transition-colors cursor-pointer"
                                 onClick={() => setDrillDown({
                                   title: t('dashboard.drillDownCategory', { category: item.category_name, month: monthLabelStr }),
                                   category_id: item.category_id,
@@ -1182,8 +1182,8 @@ export default function DashboardPage() {
                         row.isProjected
                           ? ''
                           : row.isShared
-                            ? 'cursor-pointer hover:bg-muted'
-                            : 'cursor-pointer hover:bg-muted'
+                            ? 'cursor-pointer hover:bg-hover'
+                            : 'cursor-pointer hover:bg-hover'
                       }`}
                       onClick={() => {
                         if (row.isProjected) return

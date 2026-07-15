@@ -673,7 +673,7 @@ export default function ReportsPage() {
                     className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
                       rangeKey === opt.key
                         ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                     }`}
                   >
                     {t(`reports.${RANGE_LABELS[opt.key]}`)}
@@ -696,7 +696,7 @@ export default function ReportsPage() {
                   className={`px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                     interval === opt.value
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                   }`}
                 >
                   {t(`reports.${INTERVAL_LABELS[opt.key]}`)}
@@ -1136,7 +1136,7 @@ export default function ReportsPage() {
                   className={`px-2 py-1 text-[11px] font-semibold text-center transition-colors ${
                     compositionView === opt
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                   }`}
                 >
                   {t(`reports.${opt}`)}
@@ -1428,7 +1428,7 @@ export default function ReportsPage() {
                         className={`px-2.5 py-1 text-[11px] font-semibold transition-colors ${
                           sparklineView === opt
                             ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-hover'
                         }`}
                       >
                         {t(`reports.${opt}`)}

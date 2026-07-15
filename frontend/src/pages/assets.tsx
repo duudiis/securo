@@ -811,10 +811,10 @@ export default function AssetsPage() {
           <div className="flex items-center justify-end gap-0.5">
             {canWrite && (
               <>
-                <button onClick={(e) => { e.stopPropagation(); setMovingAsset(asset) }} title={t('assets.moveToWallet')} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); setMovingAsset(asset) }} title={t('assets.moveToWallet')} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-hover transition-colors">
                   <FolderInput size={13} />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); if (!isProviderOwned) openEdit(asset) }} disabled={isProviderOwned} title={isProviderOwned ? t('assets.syncedReadOnly') : t('common.edit')} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                <button onClick={(e) => { e.stopPropagation(); if (!isProviderOwned) openEdit(asset) }} disabled={isProviderOwned} title={isProviderOwned ? t('assets.syncedReadOnly') : t('common.edit')} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                   <Pencil size={13} />
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); if (!isProviderOwned) setDeletingId(asset.id) }} disabled={isProviderOwned} title={isProviderOwned ? t('assets.syncedReadOnly') : t('common.delete')} className="p-1 rounded text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
@@ -987,7 +987,7 @@ export default function AssetsPage() {
             <>
               <button
                 onClick={() => openEditWallet(wallet)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
                 title={t('assets.editWallet')}
               >
                 <Pencil size={12} />
@@ -1204,7 +1204,7 @@ export default function AssetsPage() {
                     className={`px-3 py-2.5 rounded-lg text-sm font-medium border transition-all ${
                       formMethod === m
                         ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                        : 'border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/50'
+                        : 'border-border text-muted-foreground hover:border-primary/50 hover:bg-hover'
                     } ${editingAsset ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={() => !editingAsset && setFormMethod(m)}
                   >
@@ -1249,7 +1249,7 @@ export default function AssetsPage() {
                             key={`${match.symbol}-${match.exchange ?? ''}`}
                             type="button"
                             onClick={() => pickTickerMatch(match)}
-                            className="flex flex-col w-full text-left px-3 py-2 hover:bg-muted transition-colors"
+                            className="flex flex-col w-full text-left px-3 py-2 hover:bg-hover transition-colors"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-semibold text-sm truncate">{isBond ? (match.name ?? match.symbol) : match.symbol}</span>
@@ -1637,7 +1637,7 @@ export default function AssetsPage() {
             <button
               onClick={() => movingAsset && moveAssetMutation.mutate({ id: movingAsset.id, groupId: null })}
               disabled={!movingAsset?.group_id || moveAssetMutation.isPending}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
             >
               <div className="w-6 h-6 rounded-md flex items-center justify-center bg-muted">
                 <Package size={13} className="text-muted-foreground" />
@@ -1649,7 +1649,7 @@ export default function AssetsPage() {
                 key={w.id}
                 onClick={() => movingAsset && moveAssetMutation.mutate({ id: movingAsset.id, groupId: w.id })}
                 disabled={movingAsset?.group_id === w.id || moveAssetMutation.isPending}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
               >
                 <div
                   className="w-6 h-6 rounded-md flex items-center justify-center"
@@ -2200,7 +2200,7 @@ function AssetDetail({ assetId, currency, locale: loc, dateLocale: dateLoc, purc
               const changePct = prev && prev.amount !== 0 ? (change! / prev.amount) * 100 : null
 
               return (
-                <div key={v.id} className={`flex items-center justify-between py-2 px-3 transition-colors ${isPurchase ? 'bg-primary/5' : 'hover:bg-muted/30'}`}>
+                <div key={v.id} className={`flex items-center justify-between py-2 px-3 transition-colors ${isPurchase ? 'bg-primary/5' : 'hover:bg-hover'}`}>
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-sm tabular-nums font-semibold text-foreground">
                       {mask(formatCurrency(v.amount, currency, loc))}
@@ -2490,7 +2490,7 @@ function AssetTransactionsTab({
                     <button
                       onClick={() => openEdit(tx)}
                       title={t('common.edit')}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
                     >
                       <Pencil size={14} />
                     </button>

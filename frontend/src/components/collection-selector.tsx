@@ -95,7 +95,7 @@ export function CollectionSelector({ variant = 'sidebar' }: { variant?: 'sidebar
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="group inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1.5 text-[13px] transition-colors hover:bg-muted/50"
+              className="group inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1.5 text-[13px] transition-colors hover:bg-hover"
               style={
                 activeCollection
                   ? { borderColor: `${activeCollection.color}55`, backgroundColor: `${activeCollection.color}14` }
@@ -124,7 +124,7 @@ export function CollectionSelector({ variant = 'sidebar' }: { variant?: 'sidebar
         {activeCollection && (
           <button
             onClick={() => setActiveCollectionId(null)}
-            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
             aria-label={t('collections.clearFilter')}
           >
             <X size={13} />

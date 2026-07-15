@@ -167,7 +167,7 @@ export default function BudgetsPage() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center gap-2 border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground hover:bg-muted/50 transition-all cursor-pointer min-w-[180px]"
+                  className="inline-flex items-center justify-center gap-2 border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground hover:bg-hover transition-all cursor-pointer min-w-[180px]"
                 >
                   <CalendarIcon className="size-3.5 text-muted-foreground" />
                   {monthTitle}
@@ -236,7 +236,7 @@ export default function BudgetsPage() {
                 return (
                   <React.Fragment key={bucket.id}>
                     <tr
-                      className="border-b border-border last:border-0 bg-muted/40 hover:bg-muted transition-colors cursor-pointer"
+                      className="border-b border-border last:border-0 bg-muted/40 hover:bg-hover transition-colors cursor-pointer"
                       onClick={() => toggleGroup(bucket.id)}
                     >
                       <td className="py-3 pl-4 sm:pl-5 text-sm font-semibold text-foreground">
@@ -251,7 +251,7 @@ export default function BudgetsPage() {
                       {canWrite && <td className="py-3 pr-4 sm:pr-5" />}
                     </tr>
                     {isExpanded && rows.map((budget) => (
-                      <tr key={budget.id} className="border-b border-border last:border-0 hover:bg-muted transition-colors">
+                      <tr key={budget.id} className="border-b border-border last:border-0 hover:bg-hover transition-colors">
                         <td className="py-3 pl-8 sm:pl-12 text-sm font-medium text-foreground">
                           <span className="flex items-center gap-1.5">
                             {getCategoryDisplay(budget.category_id)}

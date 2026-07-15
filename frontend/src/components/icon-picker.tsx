@@ -45,7 +45,7 @@ export function IconPicker({ value, color, onChange }: IconPickerProps) {
                 'w-9 h-9 rounded-lg flex items-center justify-center transition-all',
                 isSelected
                   ? 'ring-2 ring-offset-1 ring-primary'
-                  : 'hover:bg-muted'
+                  : 'hover:bg-hover'
               )}
               style={isSelected ? { backgroundColor: color || '#6B7280' } : undefined}
               onClick={() => onChange(entry.name)}

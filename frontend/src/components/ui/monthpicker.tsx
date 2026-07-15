@@ -68,7 +68,7 @@ function MonthPicker({
           type="button"
           onClick={handlePrevYear}
           disabled={minDate ? menuYear - 1 < minDate.getFullYear() : false}
-          className="size-7 inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+          className="size-7 inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-hover transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
         >
           <ChevronLeft className="size-4" />
         </button>
@@ -79,7 +79,7 @@ function MonthPicker({
           type="button"
           onClick={handleNextYear}
           disabled={maxDate ? menuYear + 1 > maxDate.getFullYear() : false}
-          className="size-7 inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+          className="size-7 inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-hover transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
         >
           <ChevronRight className="size-4" />
         </button>
@@ -124,7 +124,7 @@ function MonthPicker({
                         'h-full w-full rounded-lg text-sm capitalize transition-colors flex items-center justify-center cursor-pointer',
                         isSelected
                           ? 'bg-primary text-primary-foreground font-semibold'
-                          : 'text-foreground hover:bg-muted/60 disabled:opacity-30 disabled:pointer-events-none'
+                          : 'text-foreground hover:bg-hover disabled:opacity-30 disabled:pointer-events-none'
                       )}
                     >
                       {displayMonthName}

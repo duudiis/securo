@@ -126,7 +126,7 @@ export default function CategoriesPage() {
   }
 
   const renderCategoryItem = (cat: Category) => (
-    <div key={cat.id} className="flex items-center gap-3 px-4 sm:px-5 pl-6 sm:pl-12 py-2.5 border-b border-border last:border-0 hover:bg-muted transition-colors">
+    <div key={cat.id} className="flex items-center gap-3 px-4 sm:px-5 pl-6 sm:pl-12 py-2.5 border-b border-border last:border-0 hover:bg-hover transition-colors">
       <CategoryIcon icon={cat.icon} color={cat.color} size="md" />
       <div className="flex-1 min-w-0 flex items-center gap-2">
         <span className="text-sm font-medium text-foreground truncate">{cat.name}</span>

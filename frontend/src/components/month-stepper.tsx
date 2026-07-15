@@ -40,7 +40,7 @@ export function MonthStepper({ value, onChange, locale = 'pt-BR', prevLabel, nex
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="inline-flex items-center justify-center border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground min-w-0 sm:min-w-[160px] truncate hover:bg-muted/50 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground min-w-0 sm:min-w-[160px] truncate hover:bg-hover transition-all cursor-pointer"
           >
             {label}
           </button>
