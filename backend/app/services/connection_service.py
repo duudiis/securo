@@ -1200,6 +1200,11 @@ async def sync_connection(
                 continue
 
             if account:
+                # Fork addition: the user asked to drop their type override —
+                # re-adopt whatever the provider reports, once.
+                if account.type_reset_pending:
+                    account.type = acc_data.type
+                    account.type_reset_pending = False
                 # Normalize the provider sign using the account's CURRENT type,
                 # which reflects any user override (sync never rewrites `type`).
                 # SimpleFIN reports card debt as negative under a "checking"

@@ -40,6 +40,9 @@ class Account(Base):
     minimum_payment: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=15, scale=2), nullable=True)
     card_brand: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     card_level: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    # Fork addition (column created by app.fork_migrations): when true, the
+    # next sync re-adopts the provider-reported type and clears the flag.
+    type_reset_pending: Mapped[bool] = mapped_column(Boolean, default=False)
     is_closed: Mapped[bool] = mapped_column(Boolean, default=False)
     closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 

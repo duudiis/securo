@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatAccountMask, getAccountLabel, getAccountName } from '@/lib/account-utils'
 import { getConnectionName } from '@/lib/connection-utils'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -32,7 +32,8 @@ import {
   Plus,
   Settings,
   Archive,
-  Layers,
+  RotateCcw,
+  X,
 } from 'lucide-react'
 import { AccountIcon, ConnectionLogo, getAccountTypeConfig } from '@/components/account-icon'
 import { PageHeader } from '@/components/page-header'
@@ -71,7 +72,6 @@ function daysUntil(dateStr: string | null): number | null {
 
 export default function AccountsPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const locale = useDisplayLocale()
   const dateLocale = useDateLocale()
   const { mask } = usePrivacyMode()
@@ -237,24 +237,12 @@ export default function AccountsPage() {
         section={t('accounts.title')}
         title={t('accounts.title')}
         action={
-          <div className="flex gap-2">
-            <Button variant="outline" className="gap-1.5" onClick={() => navigate('/collections')}>
-              <Layers size={16} />
-              {t('collections.title')}
+          canWrite ? (
+            <Button className="gap-1.5" onClick={() => setConnectorSelectOpen(true)}>
+              <Plus size={16} />
+              {t('accounts.connectBank')}
             </Button>
-            {canWrite && (
-              <>
-                <Button variant="outline" className="gap-1.5" onClick={() => setConnectorSelectOpen(true)}>
-                  <Plus size={16} />
-                  {t('accounts.connectBank')}
-                </Button>
-                <Button onClick={() => { setEditingAccount(null); setDialogOpen(true) }} className="gap-1.5">
-                  <Plus size={16} />
-                  {t('accounts.addManual')}
-                </Button>
-              </>
-            )}
-          </div>
+          ) : undefined
         }
       />
 
@@ -304,14 +292,14 @@ export default function AccountsPage() {
                             <Pencil size={13} />
                           </button>
                           <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
                             onClick={() => setClosingAccountId(acc.id)}
                             title={t('accounts.close')}
                           >
                             <Archive size={13} />
                           </button>
                           <button
-                            className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                             onClick={() => setDeletingId(acc.id)}
                             disabled={deleteMutation.isPending}
                             title={t('common.delete')}
@@ -460,7 +448,7 @@ export default function AccountsPage() {
                                     <Pencil size={13} />
                                   </button>
                                   <button
-                                    className="p-1.5 rounded-md text-muted-foreground hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                                    className="p-1.5 rounded-md text-muted-foreground hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
                                     onClick={(e) => { e.preventDefault(); setClosingAccountId(acc.id) }}
                                     title={t('accounts.close')}
                                   >
@@ -685,9 +673,18 @@ export default function AccountsPage() {
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditingAccount(null) }}
         account={editingAccount}
-        onSave={(data) => {
+        onSave={(data, opts) => {
           if (editingAccount) {
-            updateMutation.mutate({ id: editingAccount.id, ...data })
+            const connectionId = editingAccount.connection_id
+            updateMutation.mutate(
+              { id: editingAccount.id, ...data },
+              {
+                onSuccess: () => {
+                  // Cleared fields refill from the provider — sync right away.
+                  if (opts?.syncAfter && connectionId) syncMutation.mutate(connectionId)
+                },
+              },
+            )
           } else {
             createMutation.mutate(data as { name: string; type: string; balance?: number; balance_date?: string; currency?: string })
           }
@@ -708,17 +705,21 @@ function AccountDialog({
   open: boolean
   onClose: () => void
   account: Account | null
-  onSave: (data: {
-    name?: string
-    display_name?: string | null
-    type?: string
-    balance?: number
-    balance_date?: string
-    currency?: string
-    credit_limit?: number | null
-    statement_close_day?: number | null
-    payment_due_day?: number | null
-  }) => void
+  onSave: (
+    data: {
+      name?: string
+      display_name?: string | null
+      type?: string
+      type_reset_pending?: boolean
+      balance?: number
+      balance_date?: string
+      currency?: string
+      credit_limit?: number | null
+      statement_close_day?: number | null
+      payment_due_day?: number | null
+    },
+    opts?: { syncAfter?: boolean },
+  ) => void
   loading: boolean
 }) {
   const { t } = useTranslation()
@@ -738,6 +739,12 @@ function AccountDialog({
   const [creditLimit, setCreditLimit] = useState(account?.credit_limit?.toString() ?? '')
   const [statementCloseDay, setStatementCloseDay] = useState(account?.statement_close_day?.toString() ?? '')
   const [paymentDueDay, setPaymentDueDay] = useState(account?.payment_due_day?.toString() ?? '')
+  // "Use bank default" (connected accounts): resetType marks the type override
+  // for removal on the next sync; usedReset triggers an immediate sync on save
+  // so cleared fields refill from the provider right away.
+  const [resetType, setResetType] = useState(account?.type_reset_pending ?? false)
+  const [usedReset, setUsedReset] = useState(false)
+  const isConnected = !!account?.connection_id
 
   useEffect(() => {
     setName(account?.name ?? '')
@@ -749,7 +756,22 @@ function AccountDialog({
     setCreditLimit(account?.credit_limit?.toString() ?? '')
     setStatementCloseDay(account?.statement_close_day?.toString() ?? '')
     setPaymentDueDay(account?.payment_due_day?.toString() ?? '')
+    setResetType(account?.type_reset_pending ?? false)
+    setUsedReset(false)
   }, [account])
+
+  const bankDefaultButton = (onReset: () => void) =>
+    isConnected ? (
+      <button
+        type="button"
+        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+        onClick={() => { onReset(); setUsedReset(true) }}
+        title={t('accounts.useBankDefault')}
+      >
+        <RotateCcw size={11} />
+        {t('accounts.useBankDefault')}
+      </button>
+    ) : null
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -768,17 +790,21 @@ function AccountDialog({
               const n = parseInt(v, 10)
               return Number.isFinite(n) && n >= 1 && n <= 31 ? n : null
             }
-            const isConnected = !!account?.connection_id
-            onSave({
-              ...(!isConnected && { name, balance: parseFloat(balance), balance_date: balanceDate, currency }),
-              type,
-              display_name: displayName.trim() || null,
-              ...(isCC && {
-                credit_limit: creditLimit !== '' ? parseFloat(creditLimit) : null,
-                statement_close_day: parseDay(statementCloseDay),
-                payment_due_day: parseDay(paymentDueDay),
-              }),
-            })
+            onSave(
+              {
+                ...(!isConnected && { name, balance: parseFloat(balance), balance_date: balanceDate, currency }),
+                // A pending type reset keeps the current type until the next
+                // sync re-adopts the provider's value.
+                ...(resetType && isConnected ? { type_reset_pending: true } : { type }),
+                display_name: displayName.trim() || null,
+                ...(isCC && {
+                  credit_limit: creditLimit !== '' ? parseFloat(creditLimit) : null,
+                  statement_close_day: parseDay(statementCloseDay),
+                  payment_due_day: parseDay(paymentDueDay),
+                }),
+              },
+              { syncAfter: isConnected && usedReset },
+            )
           }}
           className="space-y-4"
         >
@@ -799,17 +825,36 @@ function AccountDialog({
           )}
           {account?.connection_id && (
             <div className="space-y-2">
-              <Label>{t('accounts.accountType')}</Label>
-              <select
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              >
-                {ACCOUNT_TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{t(o.labelKey)}</option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground">{t('accounts.typeOverrideHint')}</p>
+              <div className="flex items-center justify-between">
+                <Label>{t('accounts.accountType')}</Label>
+                {!resetType && bankDefaultButton(() => setResetType(true))}
+              </div>
+              {resetType ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">{t('accounts.typeResetPendingNote')}</p>
+                  <button
+                    type="button"
+                    className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                    onClick={() => setResetType(false)}
+                    title={t('common.cancel')}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <select
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                  >
+                    {ACCOUNT_TYPE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{t(o.labelKey)}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">{t('accounts.typeOverrideHint')}</p>
+                </>
+              )}
             </div>
           )}
           {!account?.connection_id && (
@@ -874,7 +919,10 @@ function AccountDialog({
           {type === 'credit_card' && (
             <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
               <div className="space-y-2">
-                <Label>{t('accounts.creditLimit')}</Label>
+                <div className="flex items-center justify-between">
+                  <Label>{t('accounts.creditLimit')}</Label>
+                  {bankDefaultButton(() => setCreditLimit(''))}
+                </div>
                 <Input
                   type="number"
                   step="0.01"
@@ -886,7 +934,10 @@ function AccountDialog({
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{t('accounts.statementCloseDay')}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>{t('accounts.statementCloseDay')}</Label>
+                    {bankDefaultButton(() => setStatementCloseDay(''))}
+                  </div>
                   <Input
                     type="number"
                     min="1"
@@ -897,7 +948,10 @@ function AccountDialog({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('accounts.paymentDueDay')}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>{t('accounts.paymentDueDay')}</Label>
+                    {bankDefaultButton(() => setPaymentDueDay(''))}
+                  </div>
                   <Input
                     type="number"
                     min="1"

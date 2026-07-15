@@ -304,13 +304,15 @@ async def update_account(
             "minimum_payment",
             "card_brand",
             "card_level",
+            # Fork addition: re-adopt the provider type on next sync.
+            "type_reset_pending",
         }
         disallowed = set(update_data.keys()) - editable_fields
         if disallowed:
             raise ValueError("Cannot edit bank-connected accounts")
         old_type = account.type
         new_type = update_data.get("type", account.type)
-        cc_fields = editable_fields - {"display_name", "type"}
+        cc_fields = editable_fields - {"display_name", "type", "type_reset_pending"}
         cc_update = {k: v for k, v in update_data.items() if k in cc_fields}
         if cc_update and new_type != "credit_card":
             raise ValueError("Credit card fields can only be set on credit card accounts")

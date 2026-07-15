@@ -39,6 +39,9 @@ class AccountUpdate(BaseModel):
     minimum_payment: Optional[Decimal] = None
     card_brand: Optional[str] = None
     card_level: Optional[str] = None
+    # Fork addition: set true to re-adopt the provider-reported type on the
+    # next sync (reverts a manual type override).
+    type_reset_pending: Optional[bool] = None
 
 
 class AccountRead(AccountBase):
@@ -58,6 +61,7 @@ class AccountRead(AccountBase):
     current_balance: float = 0.0
     previous_balance: Optional[float] = None
     balance_primary: Optional[float] = None
+    type_reset_pending: bool = False
     credit_limit: Optional[float] = None
     available_credit: Optional[float] = None
     statement_close_day: Optional[int] = None

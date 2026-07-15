@@ -43,6 +43,14 @@ MIGRATIONS: list[tuple[int, list[str]]] = [
             "CREATE INDEX IF NOT EXISTS ix_page_settings_workspace_id ON page_settings (workspace_id)",
         ],
     ),
+    (
+        2,
+        [
+            # One-shot marker: the next connection sync re-adopts the
+            # provider-reported account type (reverts a manual type override).
+            "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS type_reset_pending BOOLEAN NOT NULL DEFAULT FALSE",
+        ],
+    ),
 ]
 
 

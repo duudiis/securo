@@ -126,6 +126,8 @@ export interface Account {
   user_id: string
   connection_id: string | null
   external_id: string | null
+  /** Fork addition: provider type will be re-adopted on the next sync. */
+  type_reset_pending?: boolean
   name: string
   display_name: string | null
   // Last 4 chars of the bank's identifier for the account, when the provider
