@@ -193,10 +193,12 @@ export default function ReportsPage() {
   const handleDateFilterChange = (v: DateFilterValue) => {
     dateFilter.setValue(v)
     setSelectedDate(null)
-    // Short windows read poorly at monthly/yearly granularity — drop to daily.
-    if (windowDays(v) <= 92 && (interval === 'monthly' || interval === 'yearly')) {
-      setInterval('daily')
-    }
+    // Auto-fit the interval to the window in both directions — daily for a
+    // couple of weeks, weekly up to ~a quarter, monthly up to ~2 years,
+    // yearly beyond. The splitter still lets the user override afterwards.
+    const d = windowDays(v)
+    const fitted = d <= 21 ? 'daily' : d <= 92 ? 'weekly' : d <= 730 ? 'monthly' : 'yearly'
+    if (interval !== fitted) setInterval(fitted)
   }
 
   // Map the filter value onto the report API's params. Rolling windows map to
@@ -681,7 +683,7 @@ export default function ReportsPage() {
                 value={dateFilter.value}
                 onChange={handleDateFilterChange}
                 modes={['month', 'rolling', 'ytd', 'custom']}
-                className="py-1 text-xs"
+                className="text-xs"
               />
             )}
             <div className={`flex items-center rounded-lg border border-border bg-card overflow-hidden ${isMoneyMap ? 'hidden' : ''}`}>
