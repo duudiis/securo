@@ -66,7 +66,11 @@ x-backend-env: &backend-env
   AGENTS_EMBEDDING_MODEL: ${AGENTS_EMBEDDING_MODEL:-sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}
 
 x-backend-base: &backend-base
-  image: ghcr.io/securo-finance/securo-backend:latest
+  # Built locally from this checkout (dudis branch carries fork-added backend
+  # code): docker compose -f docker-compose.prod.yml build backend
+  image: securo-backend:dudis
+  build:
+    context: ./backend
   environment: *backend-env
   depends_on:
     db: { condition: service_healthy }
@@ -108,7 +112,7 @@ services:
 
   backend:
     <<: *backend-base
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    command: sh -c "alembic upgrade head && python -m app.fork_migrations && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
   frontend:
     # Built locally from this checkout (dudis branch carries UI changes the
