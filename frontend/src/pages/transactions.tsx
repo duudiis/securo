@@ -422,8 +422,12 @@ export default function TransactionsPage() {
   const noAccounts = filterAccountIds.length === 0
     && activeAccountIds !== null && activeAccountIds.length === 0
 
+  // Also keys the skeleton surface: any filter/search/page change remounts it,
+  // so refetches show the skeleton (with its minimum display time) instead of
+  // stale rows.
+  const txQueryKey = ['transactions', page, limit, effectiveAccountIds, filterCategoryIds, filterUncategorized, filterPayee, filterGroupId, filterType, filterFrom, filterTo, filterMinAmount, filterMaxAmount, searchQuery, tagFilters, grid.sortBy, grid.sortDir]
   const { data, isLoading } = useQuery({
-    queryKey: ['transactions', page, limit, effectiveAccountIds, filterCategoryIds, filterUncategorized, filterPayee, filterGroupId, filterType, filterFrom, filterTo, filterMinAmount, filterMaxAmount, searchQuery, tagFilters, grid.sortBy, grid.sortDir],
+    queryKey: txQueryKey,
     // Wait for the cloud-saved date filter before the first fetch (deep links
     // with an explicit range don't need to).
     enabled: !noAccounts && (filtersRestored || urlHadFiltersRef.current),
@@ -1289,7 +1293,8 @@ export default function TransactionsPage() {
 
       {/* Table */}
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
-        <SkeletonSurface skeleton={<SkeletonTableRows rows={10} />} loading={!data}>
+        <SkeletonSurface key={JSON.stringify(txQueryKey)} skeleton={<SkeletonTableRows rows={10} />} loading={!data}>
+          {filteredItems.length > 0 ? (
           <div className="overflow-x-auto">
           <Table style={{ tableLayout: 'fixed' }}>
             <TableHeader>
@@ -1347,16 +1352,16 @@ export default function TransactionsPage() {
                   {grid.visibleColumns.map(col => renderBodyCell(col, tx))}
                 </TableRow>
               ))}
-              {filteredItems.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={grid.visibleColumns.length + 1} className="text-center py-16 text-muted-foreground">
-                    {t('transactions.noResults')}
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
           </div>
+          ) : (
+            // Outside the fixed-layout table: its summed column widths force a
+            // phantom horizontal scrollbar under an empty result set.
+            <div className="text-center py-16 text-sm text-muted-foreground">
+              {t('transactions.noResults')}
+            </div>
+          )}
         </SkeletonSurface>
         {/* Filtered summary (issue #185): income / expenses / net across
             ALL rows matching the active filters — not just this page. */}

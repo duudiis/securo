@@ -51,28 +51,49 @@ export function SkeletonListCard({ rows = 5, header = false, className }: { rows
   )
 }
 
-/** Transactions grid rows (no card — the surface sits inside the table card):
- *  checkbox · date · description · category pill · account · amount. */
+/** Transactions grid rows (no card — the surface sits inside the table card).
+ *  Mirrors the real columns: checkbox · date (110px) · description (big
+ *  category icon + text, flex) · category (icon + name, 180px) · account
+ *  (icon + name, 160px) · amount (right). Row rhythm matches py-2.5 cells. */
 export function SkeletonTableRows({ rows = 10 }: { rows?: number }) {
   return (
     <div>
-      <div className="flex items-center gap-6 px-4 py-3 border-b border-border">
-        <Skeleton className="size-4 rounded" />
-        <Skeleton className="h-3 w-14" />
-        <Skeleton className="h-3 w-40 flex-1 max-w-56" />
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-20 hidden md:block" />
-        <Skeleton className="h-3 w-16 ml-auto" />
+      {/* Header row */}
+      <div className="flex items-center border-b border-border px-0 py-3">
+        <div className="w-10 pl-4 shrink-0">
+          <Skeleton className="size-4 rounded" />
+        </div>
+        <Skeleton className="h-3 w-10 ml-2" style={{ marginRight: 68 }} />
+        <Skeleton className="h-3 w-24 flex-1 max-w-28" />
+        <Skeleton className="h-3 w-16 hidden md:block" style={{ marginRight: 100 }} />
+        <Skeleton className="h-3 w-16 hidden lg:block" style={{ marginRight: 80 }} />
+        <Skeleton className="h-3 w-14 ml-auto mr-5" />
       </div>
       <div className="divide-y divide-border">
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex items-center gap-6 px-4 py-3.5">
-            <Skeleton className="size-4 rounded" />
-            <Skeleton className="h-3.5 w-14" />
-            <Skeleton className="h-3.5 flex-1 max-w-72" />
-            <Skeleton className="h-5 w-24 rounded-full" />
-            <Skeleton className="h-3.5 w-24 hidden md:block" />
-            <Skeleton className="h-3.5 w-16 ml-auto" />
+          <div key={i} className="flex items-center py-2.5">
+            <div className="w-10 pl-4 shrink-0">
+              <Skeleton className="size-4 rounded" />
+            </div>
+            {/* date */}
+            <Skeleton className="h-3.5 w-16 ml-2 mr-8 shrink-0" />
+            {/* description: category icon + text */}
+            <div className="flex items-center gap-3 flex-1 min-w-0 pl-2">
+              <Skeleton className="size-9 rounded-xl shrink-0" />
+              <Skeleton className="h-3.5" style={{ width: `${52 - (i % 4) * 9}%`, maxWidth: 260 }} />
+            </div>
+            {/* category: small icon + name */}
+            <div className="hidden md:flex items-center gap-2 w-[170px] shrink-0">
+              <Skeleton className="size-6 rounded-md shrink-0" />
+              <Skeleton className="h-3.5 w-20" />
+            </div>
+            {/* account: small icon + name */}
+            <div className="hidden lg:flex items-center gap-2 w-[150px] shrink-0">
+              <Skeleton className="size-6 rounded-md shrink-0" />
+              <Skeleton className="h-3.5 w-24" />
+            </div>
+            {/* amount */}
+            <Skeleton className="h-3.5 w-16 ml-auto mr-5 shrink-0" />
           </div>
         ))}
       </div>

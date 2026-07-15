@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { SkeletonListCard } from '@/components/skeletons'
 
 const CROSSFADE_MS = 250
+// Once a skeleton has been shown, keep it up at least this long — a
+// few-ms flash on fast connections reads as flicker.
+const MIN_SKELETON_MS = 400
 
 /**
  * Loading surface with a real crossfade.
@@ -28,23 +31,41 @@ export function SkeletonSurface({
   // revealed: content is (becoming) visible. skeletonGone: overlay unmounted.
   const [revealed, setRevealed] = useState(!loading)
   const [skeletonGone, setSkeletonGone] = useState(!loading)
+  const skeletonShownAtRef = useRef<number | null>(null)
 
-  // Loading finished → mount content invisible, then crossfade both layers.
+  // Stamp when the skeleton first became visible (declared before the reveal
+  // effect so the stamp exists by the time the reveal reads it).
+  useEffect(() => {
+    if (loading && skeletonShownAtRef.current === null) {
+      skeletonShownAtRef.current = Date.now()
+    }
+  }, [loading])
+
+  // Loading finished → wait out the skeleton's minimum display time, then
+  // mount content invisible and crossfade both layers.
   useEffect(() => {
     if (loading || revealed) return
+    const shownAt = skeletonShownAtRef.current
+    const wait = shownAt ? Math.max(0, MIN_SKELETON_MS - (Date.now() - shownAt)) : 0
+    let raf1 = 0
+    let raf2 = 0
     // Double rAF: the content must paint at opacity 0 before the transition
     // starts, otherwise the fade snaps.
-    let raf2 = 0
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setRevealed(true))
-    })
-    const timer = setTimeout(() => setSkeletonGone(true), CROSSFADE_MS + 100)
+    const delay = setTimeout(() => {
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setRevealed(true))
+      })
+    }, wait)
+    const timer = setTimeout(() => setSkeletonGone(true), wait + CROSSFADE_MS + 150)
     return () => {
+      clearTimeout(delay)
       cancelAnimationFrame(raf1)
       cancelAnimationFrame(raf2)
       clearTimeout(timer)
     }
   }, [loading, revealed])
+
+  const contentMounted = !loading || revealed
 
   return (
     <div className={cn('relative', className)}>
@@ -55,7 +76,7 @@ export function SkeletonSurface({
         )}
         style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
       >
-        {!loading || revealed ? children : null}
+        {contentMounted ? children : null}
       </div>
 
       {!skeletonGone && (
@@ -63,13 +84,16 @@ export function SkeletonSurface({
           aria-hidden
           className={cn(
             'pointer-events-none transition-opacity motion-reduce:transition-none',
-            // In flow while loading (defines the surface height); overlays the
-            // mounting content during the crossfade. Not clipped — a hard
-            // bottom chop mid-fade reads as a cut, a fading overhang doesn't.
-            // The pulse freezes during the fade: children animating opacity
-            // against the fading overlay reads as flicker.
+            // In flow while loading (defines the surface height); becomes an
+            // overlay the moment content mounts underneath (which may be
+            // before the reveal — the skeleton holds its minimum display
+            // time on top of the already-mounted content). Not clipped — a
+            // hard bottom chop mid-fade reads as a cut, a fading overhang
+            // doesn't. The pulse freezes during the fade: children animating
+            // opacity against the fading overlay reads as flicker.
+            contentMounted && 'absolute inset-x-0 top-0 z-10',
             revealed
-              ? 'absolute inset-x-0 top-0 opacity-0 z-10 [&_[data-slot=skeleton]]:animate-none'
+              ? 'opacity-0 [&_[data-slot=skeleton]]:animate-none'
               : 'opacity-100',
           )}
           style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
