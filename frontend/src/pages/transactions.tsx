@@ -1566,19 +1566,20 @@ export default function TransactionsPage() {
 
             <div className="w-px bg-border/60 self-stretch" />
 
-            {/* Categorize — fires on selection, no separate Apply button */}
+            {/* Categorize — fires on selection, no separate Apply button.
+                "No category" bulk-clears the selection's categories. */}
             <CategorySelect
               key={bulkCategory}
               value={bulkCategory}
               onChange={(next) => {
                 setBulkCategory(next)
-                if (next) {
-                  bulkCategorizeMutation.mutate({ ids: Array.from(selectedIds), categoryId: next })
-                }
+                bulkCategorizeMutation.mutate({ ids: Array.from(selectedIds), categoryId: next || null })
               }}
               categories={categoriesList ?? []}
               groups={categoryGroupsList ?? []}
               placeholder={t('transactions.selectCategory')}
+              allowNone
+              emptyShowsPlaceholder
               disabled={bulkCategorizeMutation.isPending}
               className="w-44 md:w-56 h-auto py-2 border-transparent bg-transparent hover:bg-muted/60 focus:bg-muted/60 focus-visible:ring-0"
               contentProps={{ side: 'top', sideOffset: 8 }}

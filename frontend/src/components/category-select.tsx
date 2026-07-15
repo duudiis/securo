@@ -15,6 +15,10 @@ interface CategorySelectProps {
   disabled?: boolean
   className?: string
   allowNone?: boolean
+  /** With allowNone, render the placeholder for an empty value instead of the
+   *  "No category" label — for pickers where empty means "nothing chosen yet"
+   *  (e.g. the bulk-edit bar) rather than "category cleared". */
+  emptyShowsPlaceholder?: boolean
   contentProps?: React.ComponentProps<typeof PopoverContent>
 }
 
@@ -31,6 +35,7 @@ export function CategorySelect({
   disabled = false,
   className,
   allowNone = false,
+  emptyShowsPlaceholder = false,
   contentProps,
 }: CategorySelectProps) {
   const [open, setOpen] = useState(false)
@@ -107,7 +112,7 @@ export function CategorySelect({
                 ) : null}
                 <span className="truncate">{selectedCategory.name}</span>
               </>
-            ) : value === '' && allowNone ? (
+            ) : value === '' && allowNone && !emptyShowsPlaceholder ? (
               <span className="italic text-muted-foreground truncate">{t('transactions.noCategory')}</span>
             ) : (
               <span className="text-muted-foreground truncate">{resolvedPlaceholder}</span>
