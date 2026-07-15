@@ -111,7 +111,11 @@ services:
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
   frontend:
-    image: ghcr.io/securo-finance/securo-frontend:latest
+    # Built locally from this checkout (dudis branch carries UI changes the
+    # upstream ghcr image doesn't have): docker compose -f docker-compose.prod.yml build frontend
+    image: securo-frontend:dudis
+    build:
+      context: ./frontend
     environment:
       BACKEND_URL: http://backend:8000
       FRONTEND_URL: ${FRONTEND_URL:-https://securo.dudis.space}
