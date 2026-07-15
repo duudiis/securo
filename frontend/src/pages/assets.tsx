@@ -51,7 +51,7 @@ import {
 } from 'recharts'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
-import { SkeletonStatTiles, SkeletonTableCard } from '@/components/skeletons'
+import { SkeletonStatTiles, SkeletonListCard } from '@/components/skeletons'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -1079,7 +1079,7 @@ export default function AssetsPage() {
         />
       )}
 
-      <SkeletonSurface skeleton={<div className="space-y-4"><SkeletonStatTiles count={4} /><SkeletonTableCard rows={6} /></div>} loading={isLoading || walletsLoading}>
+      <SkeletonSurface skeleton={<div className="space-y-4"><SkeletonStatTiles count={4} /><SkeletonListCard rows={5} header /></div>} loading={isLoading || walletsLoading}>
         <div className="space-y-6">
           {/* Wallets (active assets grouped) */}
           {(sortedWallets.length > 0 || ungroupedAssets.length > 0) && (

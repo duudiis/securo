@@ -64,8 +64,9 @@ export function SkeletonSurface({
           className={cn(
             'pointer-events-none transition-opacity motion-reduce:transition-none',
             // In flow while loading (defines the surface height); overlays the
-            // mounting content during the crossfade.
-            revealed ? 'absolute inset-0 overflow-hidden opacity-0 z-10' : 'opacity-100',
+            // mounting content during the crossfade. Not clipped — a hard
+            // bottom chop mid-fade reads as a cut, a fading overhang doesn't.
+            revealed ? 'absolute inset-x-0 top-0 opacity-0 z-10' : 'opacity-100',
           )}
           style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
         >

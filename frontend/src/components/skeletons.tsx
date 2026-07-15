@@ -51,35 +51,32 @@ export function SkeletonListCard({ rows = 5, header = false, className }: { rows
   )
 }
 
-/** Table rows without a card wrapper (for surfaces already inside a card). */
-export function SkeletonTableRows({ rows = 8 }: { rows?: number }) {
+/** Transactions grid rows (no card — the surface sits inside the table card):
+ *  checkbox · date · description · category pill · account · amount. */
+export function SkeletonTableRows({ rows = 10 }: { rows?: number }) {
   return (
     <div>
-      <div className="flex items-center gap-6 px-5 py-3.5 border-b border-border">
-        {[24, 40, 64, 32, 40, 24].map((w, i) => (
-          <Skeleton key={i} className="h-3" style={{ width: w }} />
-        ))}
+      <div className="flex items-center gap-6 px-4 py-3 border-b border-border">
+        <Skeleton className="size-4 rounded" />
+        <Skeleton className="h-3 w-14" />
+        <Skeleton className="h-3 w-40 flex-1 max-w-56" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-20 hidden md:block" />
+        <Skeleton className="h-3 w-16 ml-auto" />
       </div>
       <div className="divide-y divide-border">
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex items-center gap-6 px-5 py-4">
+          <div key={i} className="flex items-center gap-6 px-4 py-3.5">
             <Skeleton className="size-4 rounded" />
-            <Skeleton className="h-3.5 w-20" />
-            <Skeleton className="h-3.5 flex-1 max-w-64" />
-            <Skeleton className="h-3.5 w-24 ml-auto" />
-            <Skeleton className="h-3.5 w-16" />
+            <Skeleton className="h-3.5 w-14" />
+            <Skeleton className="h-3.5 flex-1 max-w-72" />
+            <Skeleton className="h-5 w-24 rounded-full" />
+            <Skeleton className="h-3.5 w-24 hidden md:block" />
+            <Skeleton className="h-3.5 w-16 ml-auto" />
           </div>
         ))}
       </div>
     </div>
-  )
-}
-
-export function SkeletonTableCard({ rows = 8, className }: { rows?: number; className?: string }) {
-  return (
-    <SkeletonCard className={className}>
-      <SkeletonTableRows rows={rows} />
-    </SkeletonCard>
   )
 }
 
@@ -131,7 +128,9 @@ export function DashboardSkeleton() {
         <SkeletonListCard rows={5} header />
         <SkeletonChartCard height={300} />
       </div>
-      <SkeletonTableCard rows={6} />
+      <SkeletonCard>
+        <SkeletonTableRows rows={6} />
+      </SkeletonCard>
     </div>
   )
 }
@@ -172,7 +171,82 @@ export function AccountsSkeleton() {
     <div className="space-y-6">
       <SkeletonListCard rows={3} />
       <SkeletonListCard rows={3} header />
-      <SkeletonTableCard rows={4} />
+      <SkeletonListCard rows={3} header />
     </div>
+  )
+}
+
+/** Budgets table: collapsed group rows — chevron + icon + name left, amount right. */
+export function BudgetsSkeleton() {
+  return (
+    <SkeletonCard>
+      <SkeletonCardHeader />
+      <div className="divide-y divide-border">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-2 px-5 py-3.5">
+            <Skeleton className="size-3.5 rounded" />
+            <Skeleton className="size-6 rounded-md" />
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="h-3.5 w-24 ml-auto" />
+            <Skeleton className="h-3.5 w-14" />
+          </div>
+        ))}
+      </div>
+    </SkeletonCard>
+  )
+}
+
+/** Categories page: group header rows with a couple of indented items each. */
+export function CategoriesSkeleton() {
+  return (
+    <SkeletonCard>
+      <SkeletonCardHeader />
+      <div>
+        {Array.from({ length: 3 }).map((_, g) => (
+          <div key={g}>
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-border bg-muted/40">
+              <Skeleton className="size-3.5 rounded" />
+              <Skeleton className="size-7 rounded-md" />
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-8" />
+            </div>
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 pl-12 pr-5 py-2.5 border-b border-border">
+                <Skeleton className="size-7 rounded-md" />
+                <Skeleton className="h-3.5 w-36" />
+                <Skeleton className="h-3.5 w-20 ml-auto" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </SkeletonCard>
+  )
+}
+
+/** Payees table: name · type pill · counts · amount. */
+export function PayeesSkeleton() {
+  return (
+    <SkeletonCard>
+      <div className="flex items-center gap-6 px-4 py-3 border-b border-border">
+        <Skeleton className="h-3 w-24 flex-1 max-w-48" />
+        <Skeleton className="h-3 w-14" />
+        <Skeleton className="h-3 w-10 hidden sm:block" />
+        <Skeleton className="h-3 w-16 ml-auto" />
+      </div>
+      <div className="divide-y divide-border">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-6 px-4 py-3.5">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Skeleton className="size-8 rounded-full shrink-0" />
+              <Skeleton className="h-3.5 w-40 max-w-[60%]" />
+            </div>
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-3.5 w-10 hidden sm:block" />
+            <Skeleton className="h-3.5 w-20 ml-auto" />
+          </div>
+        ))}
+      </div>
+    </SkeletonCard>
   )
 }

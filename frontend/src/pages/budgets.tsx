@@ -21,7 +21,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { MonthPicker } from '@/components/ui/monthpicker'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
-import { SkeletonTableCard } from '@/components/skeletons'
+import { BudgetsSkeleton } from '@/components/skeletons'
 import { CategoryIcon } from '@/components/category-icon'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
@@ -197,7 +197,7 @@ export default function BudgetsPage() {
         }
       />
 
-      <SkeletonSurface skeleton={<SkeletonTableCard rows={7} />} loading={budgetsLoading || categoriesLoading || groupsLoading}>
+      <SkeletonSurface skeleton={<BudgetsSkeleton />} loading={budgetsLoading || categoriesLoading || groupsLoading}>
       <SectionCard>
         <SectionHeader
           title={t('budgets.title')}
