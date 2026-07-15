@@ -1079,6 +1079,23 @@
     "confirmRegenerate": "Os parâmetros de crescimento foram alterados. Todos os valores gerados automaticamente serão excluídos e recalculados. Valores manuais serão mantidos.",
     "regenerate": "Regenerar"
   },
+  "dateFilter": {
+    "tabMonth": "Mês",
+    "tabRolling": "Período móvel",
+    "tabCustom": "Personalizado",
+    "thisMonth": "Este mês",
+    "pastDays": "Últimos {{count}} dias",
+    "pastMonths": "Últimos {{count}} meses",
+    "pastYears": "Últimos {{count}} anos",
+    "ytd": "Ano até hoje",
+    "apply": "Aplicar",
+    "from": "De",
+    "to": "Até",
+    "last": "Últimos",
+    "days": "dias",
+    "months": "meses",
+    "years": "anos"
+  },
   "reports": {
     "section": "Análises",
     "netWorth": "Patrimônio Líquido",

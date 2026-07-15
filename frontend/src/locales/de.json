@@ -1079,6 +1079,23 @@
     "confirmRegenerate": "Wachstumsparameter wurden geändert. Alle automatisch generierten Werte werden gelöscht und neu berechnet. Manuell eingegebene Werte bleiben erhalten.",
     "regenerate": "Neu generieren"
   },
+  "dateFilter": {
+    "tabMonth": "Monat",
+    "tabRolling": "Zeitraum",
+    "tabCustom": "Benutzerdefiniert",
+    "thisMonth": "Dieser Monat",
+    "pastDays": "Letzte {{count}} Tage",
+    "pastMonths": "Letzte {{count}} Monate",
+    "pastYears": "Letzte {{count}} Jahre",
+    "ytd": "Seit Jahresbeginn",
+    "apply": "Anwenden",
+    "from": "Von",
+    "to": "Bis",
+    "last": "Letzte",
+    "days": "Tage",
+    "months": "Monate",
+    "years": "Jahre"
+  },
   "reports": {
     "section": "Analysen",
     "netWorth": "Nettovermögen",

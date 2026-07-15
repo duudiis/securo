@@ -1148,6 +1148,23 @@
     "confirmRegenerate": "Zmieniono parametry wzrostu. Wszystkie automatycznie wygenerowane wartości zostaną usunięte i przeliczone ponownie. Wartości ręczne zostaną zachowane.",
     "regenerate": "Przelicz ponownie"
   },
+  "dateFilter": {
+    "tabMonth": "Miesiąc",
+    "tabRolling": "Okres",
+    "tabCustom": "Niestandardowy",
+    "thisMonth": "Ten miesiąc",
+    "pastDays": "Ostatnie {{count}} dni",
+    "pastMonths": "Ostatnie {{count}} mies.",
+    "pastYears": "Ostatnie {{count}} lat",
+    "ytd": "Od początku roku",
+    "apply": "Zastosuj",
+    "from": "Od",
+    "to": "Do",
+    "last": "Ostatnie",
+    "days": "dni",
+    "months": "mies.",
+    "years": "lat"
+  },
   "reports": {
     "section": "Analityka",
     "netWorth": "Majątek netto",

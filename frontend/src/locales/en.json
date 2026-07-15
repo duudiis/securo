@@ -1079,6 +1079,23 @@
     "confirmRegenerate": "Growth parameters changed. All automatically generated values will be deleted and recalculated. Manual values will be kept.",
     "regenerate": "Regenerate"
   },
+  "dateFilter": {
+    "tabMonth": "Month",
+    "tabRolling": "Rolling",
+    "tabCustom": "Custom",
+    "thisMonth": "This month",
+    "pastDays": "Last {{count}} days",
+    "pastMonths": "Last {{count}} months",
+    "pastYears": "Last {{count}} years",
+    "ytd": "Year to date",
+    "apply": "Apply",
+    "from": "From",
+    "to": "To",
+    "last": "Last",
+    "days": "days",
+    "months": "months",
+    "years": "years"
+  },
   "reports": {
     "section": "Analytics",
     "netWorth": "Net Worth",
