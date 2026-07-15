@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Search, X } from 'lucide-react'
 import {
   DropdownMenuCheckboxItem,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
 import type { Category, CategoryGroup } from '@/types'
 import { normalizeText } from '@/lib/utils'
@@ -36,6 +35,17 @@ export function CategoryFilterContent({
 }: CategoryFilterContentProps) {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
+  // Groups start collapsed; searching reveals every matching category.
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+
+  const toggleExpanded = (groupId: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupId)) next.delete(groupId)
+      else next.add(groupId)
+      return next
+    })
+  }
 
   const displayCategoryGroups = useMemo(() => {
     const ungrouped = (categories ?? []).filter((c) => !c.group_id)
@@ -107,35 +117,75 @@ export function CategoryFilterContent({
             : t('transactions.filtersBar.noOptions')}
         </div>
       ) : (
-        displayCategoryGroups.map((group) => (
-          <DropdownMenuGroup key={group.id}>
-            <DropdownMenuLabel className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
-              {group.name}
-            </DropdownMenuLabel>
-            {group.categories.map((c) => (
+        displayCategoryGroups.map((group) => {
+          const isExpanded = search.trim().length > 0 || expandedGroups.has(group.id)
+          const memberIds = group.categories.map((c) => c.id)
+          const selectedCount = memberIds.filter((id) => categoryIds.includes(id)).length
+          const allSelected = memberIds.length > 0 && selectedCount === memberIds.length
+          return (
+            <DropdownMenuGroup key={group.id}>
+              {/* Group header: the checkbox (de)selects every category in the
+                  group at once; the chevron only toggles expansion. */}
               <DropdownMenuCheckboxItem
-                key={c.id}
-                checked={categoryIds.includes(c.id)}
+                checked={allSelected ? true : selectedCount > 0 ? 'indeterminate' : false}
                 onSelect={(e) => {
                   e.preventDefault()
                   onKeepOpen?.()
-                  onCategoryIdsChange(toggleInArray(categoryIds, c.id))
+                  onCategoryIdsChange(
+                    allSelected
+                      ? categoryIds.filter((id) => !memberIds.includes(id))
+                      : [...new Set([...categoryIds, ...memberIds])]
+                  )
                 }}
                 className="gap-2 rounded-sm py-1.5 text-[13px]"
               >
-                {c.color ? (
-                  <span
-                    className="size-2.5 shrink-0 rounded-full border border-black/5"
-                    style={{ backgroundColor: c.color }}
-                  />
-                ) : null}
-                <span className="min-w-0 flex-1 truncate text-left">
-                  {c.name}
+                <span className="min-w-0 flex-1 truncate text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+                  {group.name}
                 </span>
+                <span className="text-[10px] text-muted-foreground/50 shrink-0">
+                  ({group.categories.length})
+                </span>
+                <button
+                  type="button"
+                  className="p-0.5 -mr-0.5 rounded hover:bg-muted text-muted-foreground shrink-0"
+                  onPointerDown={(e) => { e.preventDefault(); e.stopPropagation() }}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onKeepOpen?.()
+                    toggleExpanded(group.id)
+                  }}
+                  aria-expanded={isExpanded}
+                  aria-label={group.name}
+                >
+                  {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                </button>
               </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuGroup>
-        ))
+              {isExpanded && group.categories.map((c) => (
+                <DropdownMenuCheckboxItem
+                  key={c.id}
+                  checked={categoryIds.includes(c.id)}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    onKeepOpen?.()
+                    onCategoryIdsChange(toggleInArray(categoryIds, c.id))
+                  }}
+                  className="gap-2 rounded-sm py-1.5 pl-6 text-[13px]"
+                >
+                  {c.color ? (
+                    <span
+                      className="size-2.5 shrink-0 rounded-full border border-black/5"
+                      style={{ backgroundColor: c.color }}
+                    />
+                  ) : null}
+                  <span className="min-w-0 flex-1 truncate text-left">
+                    {c.name}
+                  </span>
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuGroup>
+          )
+        })
       )}
       {(categoryIds.length > 0 || filterUncategorized) && (
         <>

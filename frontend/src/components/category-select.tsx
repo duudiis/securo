@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDownIcon, CheckIcon } from 'lucide-react'
+import { ChevronDownIcon, ChevronRightIcon, CheckIcon } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command'
 import type { Category, CategoryGroup } from '@/types'
@@ -18,6 +18,9 @@ interface CategorySelectProps {
   contentProps?: React.ComponentProps<typeof PopoverContent>
 }
 
+// Header items carry this prefix as their cmdk value so the filter can keep
+// them out of search results (searching lists matching categories directly).
+const GROUP_VALUE_PREFIX = '__group__'
 
 export function CategorySelect({
   value,
@@ -31,6 +34,8 @@ export function CategorySelect({
   contentProps,
 }: CategorySelectProps) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const { t } = useTranslation()
 
   const resolvedPlaceholder = placeholder ?? t('transactions.selectCategory', 'Select category')
@@ -53,8 +58,32 @@ export function CategorySelect({
     return (categories ?? []).find((c) => c.id === value)
   }, [categories, value])
 
+  // Groups start collapsed; typing expands everything (so search always finds
+  // categories), and the selected category's group opens pre-expanded.
+  const searching = search.trim().length > 0
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (nextOpen) {
+      setSearch('')
+      const selectedGroupId = selectedCategory
+        ? (selectedCategory.group_id ?? 'ungrouped-virtual')
+        : null
+      setExpandedGroups(selectedGroupId ? new Set([selectedGroupId]) : new Set())
+    }
+  }
+
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupId)) next.delete(groupId)
+      else next.add(groupId)
+      return next
+    })
+  }
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -91,10 +120,11 @@ export function CategorySelect({
       >
         <Command
           filter={(itemValue, search) => {
+            if (itemValue.startsWith(GROUP_VALUE_PREFIX)) return 0
             return normalizeText(itemValue).includes(normalizeText(search)) ? 1 : 0
           }}
         >
-          <CommandInput placeholder={t('transactions.searchCategory')} />
+          <CommandInput placeholder={t('transactions.searchCategory')} value={search} onValueChange={setSearch} />
           <CommandList>
             <CommandEmpty>{t('transactions.noCategoryFound')}</CommandEmpty>
             {allowNone && (
@@ -112,35 +142,53 @@ export function CategorySelect({
                 </CommandItem>
               </CommandGroup>
             )}
-            {displayGroups.map((group) => (
-              <CommandGroup key={group.id}>
-                <div className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
-                  {group.name}
-                </div>
-                {group.categories.map((cat) => (
-                  <CommandItem
-                    key={cat.id}
-                    value={`${group.name} ${cat.name}`}
-                    onSelect={() => {
-                      onChange(cat.id)
-                      setOpen(false)
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 min-w-0 truncate flex-1">
-                      {cat.color ? (
-                        <span
-                          className="size-2.5 shrink-0 rounded-full border border-black/5"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                      ) : null}
-                      <span className="truncate">{cat.name}</span>
-                    </div>
-                    {value === cat.id && <CheckIcon className="size-4 shrink-0" />}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            ))}
+            {displayGroups.map((group) => {
+              const isExpanded = searching || expandedGroups.has(group.id)
+              return (
+                <CommandGroup key={group.id}>
+                  {!searching && (
+                    <CommandItem
+                      value={`${GROUP_VALUE_PREFIX}${group.id}`}
+                      onSelect={() => toggleGroup(group.id)}
+                      className="cursor-pointer"
+                      aria-expanded={isExpanded}
+                    >
+                      {isExpanded
+                        ? <ChevronDownIcon className="size-3.5 shrink-0 text-muted-foreground/70" />
+                        : <ChevronRightIcon className="size-3.5 shrink-0 text-muted-foreground/70" />}
+                      <span className="flex-1 truncate text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+                        {group.name}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/50 shrink-0">
+                        ({group.categories.length})
+                      </span>
+                    </CommandItem>
+                  )}
+                  {isExpanded && group.categories.map((cat) => (
+                    <CommandItem
+                      key={cat.id}
+                      value={`${group.name} ${cat.name}`}
+                      onSelect={() => {
+                        onChange(cat.id)
+                        setOpen(false)
+                      }}
+                      className={cn('cursor-pointer', !searching && 'pl-7')}
+                    >
+                      <div className="flex items-center gap-2 min-w-0 truncate flex-1">
+                        {cat.color ? (
+                          <span
+                            className="size-2.5 shrink-0 rounded-full border border-black/5"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                        ) : null}
+                        <span className="truncate">{cat.name}</span>
+                      </div>
+                      {value === cat.id && <CheckIcon className="size-4 shrink-0" />}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )
+            })}
           </CommandList>
         </Command>
       </PopoverContent>
