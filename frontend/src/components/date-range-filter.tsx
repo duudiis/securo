@@ -4,7 +4,7 @@ import { CalendarIcon, ChevronDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { MonthPicker } from '@/components/ui/monthpicker'
-import { Calendar } from '@/components/ui/calendar'
+import { Calendar, type DateRangeSelection } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { useDateLocale } from '@/hooks/use-display-locale'
 import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
@@ -16,7 +16,7 @@ import {
   type DateFilterValue,
 } from '@/lib/date-filter'
 
-type TabKey = 'month' | 'rolling' | 'custom'
+type TabKey = 'month' | 'rolling' | 'custom' | 'all'
 
 const ROLLING_PRESETS: Array<{ key: string; value: DateFilterValue }> = [
   { key: '7d', value: { mode: 'rolling', unit: 'days', count: 7 } },
@@ -59,15 +59,16 @@ export function DateRangeFilter({
     if (modes.includes('month')) out.push('month')
     if (modes.includes('rolling') || modes.includes('ytd')) out.push('rolling')
     if (modes.includes('custom')) out.push('custom')
+    if (modes.includes('all')) out.push('all')
     return out
   }, [modes])
 
-  const tabOfValue: TabKey = value.mode === 'month' ? 'month' : value.mode === 'custom' ? 'custom' : 'rolling'
+  const tabOfValue: TabKey =
+    value.mode === 'month' ? 'month' : value.mode === 'custom' ? 'custom' : value.mode === 'all' ? 'all' : 'rolling'
 
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>(tabOfValue)
-  const [draftFrom, setDraftFrom] = useState<Date | undefined>(undefined)
-  const [draftTo, setDraftTo] = useState<Date | undefined>(undefined)
+  const [draftRange, setDraftRange] = useState<DateRangeSelection>({})
   const [rollingCount, setRollingCount] = useState('30')
   const [rollingUnit, setRollingUnit] = useState<'days' | 'months' | 'years'>('days')
 
@@ -75,13 +76,11 @@ export function DateRangeFilter({
     setOpen(nextOpen)
     if (nextOpen) {
       setActiveTab(tabs.includes(tabOfValue) ? tabOfValue : tabs[0])
-      if (value.mode === 'custom') {
-        setDraftFrom(new Date(value.from + 'T00:00:00'))
-        setDraftTo(new Date(value.to + 'T00:00:00'))
-      } else {
-        setDraftFrom(undefined)
-        setDraftTo(undefined)
-      }
+      setDraftRange(
+        value.mode === 'custom'
+          ? { from: new Date(value.from + 'T00:00:00'), to: new Date(value.to + 'T00:00:00') }
+          : {},
+      )
       if (value.mode === 'rolling') {
         setRollingCount(String(value.count))
         setRollingUnit(value.unit)
@@ -95,9 +94,12 @@ export function DateRangeFilter({
   }
 
   const applyCustom = () => {
-    if (!draftFrom || !draftTo) return
-    const [from, to] = draftFrom <= draftTo ? [draftFrom, draftTo] : [draftTo, draftFrom]
-    pick({ mode: 'custom', from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') })
+    if (!draftRange.from || !draftRange.to) return
+    pick({
+      mode: 'custom',
+      from: format(draftRange.from, 'yyyy-MM-dd'),
+      to: format(draftRange.to, 'yyyy-MM-dd'),
+    })
   }
 
   const applyRollingCustom = () => {
@@ -115,7 +117,7 @@ export function DateRangeFilter({
         <button
           type="button"
           className={cn(
-            'inline-flex items-center justify-center gap-2 border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground hover:bg-muted/50 transition-all cursor-pointer',
+            'inline-flex h-8 items-center justify-center gap-2 border border-border rounded-lg px-3 text-sm bg-card text-foreground hover:bg-muted/50 transition-all cursor-pointer',
             className,
           )}
         >
@@ -131,15 +133,19 @@ export function DateRangeFilter({
               <button
                 key={tab}
                 type="button"
-                onClick={() => setActiveTab(tab)}
+                // "All time" needs no panel — selecting the tab applies it.
+                onClick={() => (tab === 'all' ? pick({ mode: 'all' }) : setActiveTab(tab))}
                 className={cn(
-                  'px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors',
+                  'px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors cursor-pointer',
                   activeTab === tab
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
                 )}
               >
-                {tab === 'month' ? t('dateFilter.tabMonth') : tab === 'rolling' ? t('dateFilter.tabRolling') : t('dateFilter.tabCustom')}
+                {tab === 'month' ? t('dateFilter.tabMonth')
+                  : tab === 'rolling' ? t('dateFilter.tabRolling')
+                    : tab === 'custom' ? t('dateFilter.tabCustom')
+                      : t('dateFilter.allTime')}
               </button>
             ))}
           </div>
@@ -169,20 +175,6 @@ export function DateRangeFilter({
         {activeTab === 'rolling' && (
           <div className="p-3 w-64">
             <div className="grid grid-cols-2 gap-1.5">
-              {modes.includes('all') && (
-                <button
-                  type="button"
-                  onClick={() => pick({ mode: 'all' })}
-                  className={cn(
-                    'px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors text-left',
-                    value.mode === 'all'
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-foreground hover:bg-muted/50',
-                  )}
-                >
-                  {t('dateFilter.allTime')}
-                </button>
-              )}
               {ROLLING_PRESETS.map((preset) => (
                 <button
                   key={preset.key}
@@ -228,30 +220,22 @@ export function DateRangeFilter({
 
         {activeTab === 'custom' && (
           <div className="p-3">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div>
-                <p className="text-[11px] font-semibold text-muted-foreground mb-1 px-1">{t('dateFilter.from')}</p>
-                <Calendar
-                  mode="single"
-                  locale={dateFnsLocale}
-                  selected={draftFrom}
-                  defaultMonth={draftFrom}
-                  onSelect={setDraftFrom}
-                />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold text-muted-foreground mb-1 px-1">{t('dateFilter.to')}</p>
-                <Calendar
-                  mode="single"
-                  locale={dateFnsLocale}
-                  selected={draftTo}
-                  defaultMonth={draftTo}
-                  onSelect={setDraftTo}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end mt-2 pt-2 border-t border-border">
-              <Button size="sm" className="h-7 px-3 text-xs" disabled={!draftFrom || !draftTo} onClick={applyCustom}>
+            {/* One calendar for both ends: first click sets the start, second
+                the end, with the span previewed under the cursor. */}
+            <Calendar
+              mode="range"
+              locale={dateFnsLocale}
+              selectedRange={draftRange}
+              defaultMonth={draftRange.from}
+              onSelectRange={setDraftRange}
+            />
+            <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border">
+              <span className="text-[11px] text-muted-foreground tabular-nums px-1">
+                {draftRange.from ? format(draftRange.from, 'dd MMM yyyy', { locale: dateFnsLocale }) : t('dateFilter.from')}
+                {' — '}
+                {draftRange.to ? format(draftRange.to, 'dd MMM yyyy', { locale: dateFnsLocale }) : t('dateFilter.to')}
+              </span>
+              <Button size="sm" className="h-7 px-3 text-xs" disabled={!draftRange.from || !draftRange.to} onClick={applyCustom}>
                 {t('dateFilter.apply')}
               </Button>
             </div>
