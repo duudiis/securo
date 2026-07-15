@@ -658,7 +658,9 @@
         "description": "Banki w USA i międzynarodowe przez SimpleFIN Bridge"
       }
     },
-    "reconnected": "Bank połączony ponownie"
+    "reconnected": "Bank połączony ponownie",
+    "useBankDefault": "Użyj wartości banku",
+    "typeResetPendingNote": "Typ podany przez bank zostanie przywrócony przy następnej synchronizacji."
   },
   "connections": {
     "settings": "Ustawienia połączenia",
@@ -1010,7 +1012,9 @@
     "balanceImpact": "Wpływ na saldo",
     "importedWithExcluded": "Zaimportowano: {{imported}}, pominięto: {{skipped}}, wykluczono: {{excluded}}",
     "suggested": "Sugerowane",
-    "page": "Strona {{current}} z {{total}}"
+    "page": "Strona {{current}} z {{total}}",
+    "addFiles": "Importuj pliki",
+    "queuedCount": "+{{count}} w kolejce"
   },
   "assets": {
     "title": "Aktywa",

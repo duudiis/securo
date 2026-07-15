@@ -622,7 +622,9 @@
         "description": "US-amerikanische und internationale Banken via SimpleFIN Bridge"
       }
     },
-    "reconnected": "Bank erfolgreich erneut verbunden"
+    "reconnected": "Bank erfolgreich erneut verbunden",
+    "useBankDefault": "Bankstandard verwenden",
+    "typeResetPendingNote": "Der von der Bank gemeldete Typ wird bei der nächsten Synchronisierung wiederhergestellt."
   },
   "connections": {
     "settings": "Verbindungseinstellungen",
@@ -941,7 +943,9 @@
     "balanceImpact": "Auswirkung auf den Saldo",
     "importedWithExcluded": "{{imported}} importiert, {{skipped}} übersprungen, {{excluded}} ausgeschlossen",
     "suggested": "Vorgeschlagen",
-    "page": "Seite {{current}} von {{total}}"
+    "page": "Seite {{current}} von {{total}}",
+    "addFiles": "Dateien importieren",
+    "queuedCount": "+{{count}} in Warteschlange"
   },
   "assets": {
     "title": "Vermögenswerte",

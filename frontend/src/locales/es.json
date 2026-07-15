@@ -622,7 +622,9 @@
         "description": "Bancos de EE. UU. e internacionales vía SimpleFIN Bridge"
       }
     },
-    "reconnected": "Banco reconectado correctamente"
+    "reconnected": "Banco reconectado correctamente",
+    "useBankDefault": "Usar valor del banco",
+    "typeResetPendingNote": "El tipo informado por el banco se restaurará en la próxima sincronización."
   },
   "connections": {
     "settings": "Configuración de la conexión",
@@ -941,7 +943,9 @@
     "balanceImpact": "Impacto en el saldo",
     "importedWithExcluded": "{{imported}} importadas, {{skipped}} omitidas, {{excluded}} excluidas",
     "suggested": "Sugerido",
-    "page": "Página {{current}} de {{total}}"
+    "page": "Página {{current}} de {{total}}",
+    "addFiles": "Importar archivos",
+    "queuedCount": "+{{count}} en cola"
   },
   "assets": {
     "title": "Activos",

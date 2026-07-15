@@ -622,7 +622,9 @@
         "description": "Банки США та інших країн через SimpleFIN Bridge"
       }
     },
-    "reconnected": "Банк успішно перепідключено"
+    "reconnected": "Банк успішно перепідключено",
+    "useBankDefault": "З банку за замовчуванням",
+    "typeResetPendingNote": "Тип, наданий банком, буде відновлено під час наступної синхронізації."
   },
   "connections": {
     "settings": "Налаштування підключення",
@@ -941,7 +943,9 @@
     "balanceImpact": "Вплив на баланс",
     "importedWithExcluded": "{{imported}} імпортовано, {{skipped}} пропущено, {{excluded}} виключено",
     "suggested": "Запропоновано",
-    "page": "Сторінка {{current}} із {{total}}"
+    "page": "Сторінка {{current}} із {{total}}",
+    "addFiles": "Імпортувати файли",
+    "queuedCount": "+{{count}} у черзі"
   },
   "assets": {
     "title": "Активи",

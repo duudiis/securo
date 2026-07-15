@@ -622,7 +622,9 @@
         "description": "Banche statunitensi e internazionali tramite SimpleFIN Bridge"
       }
     },
-    "reconnected": "Banca riconnessa correttamente"
+    "reconnected": "Banca riconnessa correttamente",
+    "useBankDefault": "Usa valore della banca",
+    "typeResetPendingNote": "Il tipo fornito dalla banca verrà ripristinato alla prossima sincronizzazione."
   },
   "connections": {
     "settings": "Impostazioni connessione",
@@ -941,7 +943,9 @@
     "balanceImpact": "Impatto sul saldo",
     "importedWithExcluded": "{{imported}} importate, {{skipped}} saltate, {{excluded}} escluse",
     "suggested": "Suggerita",
-    "page": "Pagina {{current}} di {{total}}"
+    "page": "Pagina {{current}} di {{total}}",
+    "addFiles": "Importa file",
+    "queuedCount": "+{{count}} in coda"
   },
   "assets": {
     "title": "Beni",

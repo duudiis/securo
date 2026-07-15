@@ -10,7 +10,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import type { ImportPreviewTransaction, ImportReviewTransaction, ImportLog } from '@/types'
-import { Upload, FileText, X, CheckCircle2, AlertCircle, History, Trash2, Settings2, Download } from 'lucide-react'
+import { Upload, FileText, X, CheckCircle2, AlertCircle, History, Trash2, Settings2, Download, Plus } from 'lucide-react'
+import { AccountIcon } from '@/components/account-icon'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { ImportSummaryBar } from '@/components/import-summary-bar'
 import { ImportReviewTable } from '@/components/import-review-table'
@@ -61,6 +62,9 @@ export function ImportSection() {
   const [dragOver, setDragOver] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
   const [currentFile, setCurrentFile] = useState<File | null>(null)
+  // Files picked/dropped beyond the one being reviewed wait here; each import
+  // (or discard) advances to the next.
+  const [fileQueue, setFileQueue] = useState<File[]>([])
   const [deleteTarget, setDeleteTarget] = useState<ImportLog | null>(null)
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
 
@@ -158,6 +162,7 @@ export function ImportSection() {
       setCurrentFile(null)
       resetCsvOptions()
       if (fileInputRef.current) fileInputRef.current.value = ''
+      advanceQueue()
     },
     onError: (error: unknown) => {
       const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail
@@ -192,6 +197,27 @@ export function ImportSection() {
     // CSV headers come back from the preview response (csv_columns), which
     // parses the file server-side and handles any delimiter/quoting.
     previewMutation.mutate({ file })
+  }
+
+  // Multi-file support: the first file opens for review immediately, the rest
+  // queue up and auto-advance as each import completes (or is discarded).
+  function enqueueFiles(files: File[]) {
+    if (files.length === 0) return
+    if (currentFile || previewMutation.isPending) {
+      setFileQueue((prev) => [...prev, ...files])
+      return
+    }
+    const [first, ...rest] = files
+    if (rest.length > 0) setFileQueue((prev) => [...prev, ...rest])
+    processFile(first)
+  }
+
+  function advanceQueue() {
+    setFileQueue((prev) => {
+      const [next, ...rest] = prev
+      if (next) processFile(next)
+      return rest
+    })
   }
 
   // Re-run the preview with the current CSV options. Accepts overrides so a
@@ -235,15 +261,13 @@ export function ImportSection() {
   }, [rePreview])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) processFile(file)
+    enqueueFiles(Array.from(e.target.files ?? []))
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
-    const file = e.dataTransfer.files?.[0]
-    if (file) processFile(file)
+    enqueueFiles(Array.from(e.dataTransfer.files ?? []))
   }
 
   const handleReset = () => {
@@ -254,6 +278,7 @@ export function ImportSection() {
     setSelectedAccount('')
     resetCsvOptions()
     if (fileInputRef.current) fileInputRef.current.value = ''
+    advanceQueue()
   }
 
   const handleToggleExcluded = useCallback((id: string) => {
@@ -276,80 +301,64 @@ export function ImportSection() {
   const includedCount = reviewTransactions.filter(t => !t.excluded).length
 
   return (
-    <div className="space-y-6">
-      {/* Upload zone */}
-      {canWrite && <div
-        className={`bg-card rounded-xl border-2 border-dashed transition-all cursor-pointer ${
-          dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-border'
-        }`}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-        onClick={() => !previewMutation.isPending && fileInputRef.current?.click()}
-      >
+    // The whole section stays a drop target — dragging files anywhere over it
+    // queues them, no dedicated drop zone needed.
+    <div
+      className="space-y-6"
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+    >
+      {canWrite && (
         <input
           ref={fileInputRef}
           type="file"
+          multiple
           accept=".ofx,.qfx,.csv,.qif,.xml,.camt"
           onChange={handleFileChange}
           className="hidden"
         />
+      )}
 
-        <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+      {/* Current file strip: processing state or the reviewed file + queue */}
+      {(previewMutation.isPending || (fileName && previewData)) && (
+        <div className="bg-card rounded-xl border border-border shadow-sm px-4 py-3 flex items-center gap-3">
           {previewMutation.isPending ? (
             <>
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 animate-pulse">
-                <FileText size={22} className="text-primary" />
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center animate-pulse shrink-0">
+                <FileText size={15} className="text-primary" />
               </div>
-              <p className="text-sm font-semibold text-foreground">{t('import.processing')}</p>
-              <p className="text-xs text-muted-foreground mt-1">{fileName}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">{t('import.processing')}</p>
+                <p className="text-xs text-muted-foreground truncate">{fileName}</p>
+              </div>
             </>
-          ) : fileName && previewData ? (
+          ) : (
             <>
-              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-                <CheckCircle2 size={22} className="text-emerald-500" />
+              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                <CheckCircle2 size={15} className="text-emerald-500" />
               </div>
-              <p className="text-sm font-semibold text-foreground">{fileName}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('import.previewInfo', { count: previewData.transactions.length, format: previewData.detected_format.toUpperCase() })}
-              </p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground truncate">{fileName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('import.previewInfo', { count: previewData!.transactions.length, format: previewData!.detected_format.toUpperCase() })}
+                </p>
+              </div>
               <button
-                className="mt-3 text-xs text-muted-foreground hover:text-rose-500 transition-colors flex items-center gap-1"
-                onClick={(e) => { e.stopPropagation(); handleReset() }}
+                className="text-xs text-muted-foreground hover:text-rose-500 transition-colors flex items-center gap-1 shrink-0"
+                onClick={handleReset}
               >
                 <X size={12} /> {t('import.removeFile')}
               </button>
             </>
-          ) : (
-            <>
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Upload size={22} className="text-muted-foreground" />
-              </div>
-              <p className="text-sm font-semibold text-foreground mb-1">
-                {t('import.dragOrClick')}
-              </p>
-              <p className="text-xs text-muted-foreground">{t('import.acceptedFormats')}</p>
-              <button
-                className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  const csv = 'date,description,amount,currency,fx_rate\n2026-01-15,Grocery Store,-120.50,USD,\n2026-01-20,Salary Payment,5000.00,EUR,1.08\n'
-                  const blob = new Blob([csv], { type: 'text/csv' })
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = 'template.csv'
-                  a.click()
-                  URL.revokeObjectURL(url)
-                }}
-              >
-                <Download size={12} />
-                {t('import.downloadTemplate')}
-              </button>
-            </>
+          )}
+          {fileQueue.length > 0 && (
+            <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2 py-0.5 shrink-0">
+              {t('import.queuedCount', { count: fileQueue.length })}
+            </span>
           )}
         </div>
-      </div>}
+      )}
 
       {/* Review section */}
       {previewData && (
@@ -388,7 +397,7 @@ export function ImportSection() {
                 ))}
               </select>
               {!selectedAccount && (
-                <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1.5 rounded-lg shrink-0">
+                <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 px-2.5 py-1.5 rounded-lg shrink-0">
                   <AlertCircle size={12} />
                   {t('import.selectAccountWarning')}
                 </div>
@@ -405,7 +414,7 @@ export function ImportSection() {
               </div>
 
               {previewData.parse_error && (
-                <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg mb-3">
+                <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-3 py-2 rounded-lg mb-3">
                   <AlertCircle size={14} className="shrink-0 mt-0.5" />
                   <span>{t('import.mappingNeeded')}</span>
                 </div>
@@ -572,14 +581,48 @@ export function ImportSection() {
         <div className="flex items-center gap-2 mb-4">
           <History className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold text-foreground">{t('import.history')}</h2>
+          {canWrite && (
+            <div className="ml-auto flex items-center gap-1.5">
+              <button
+                type="button"
+                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title={t('import.downloadTemplate')}
+                onClick={() => {
+                  const csv = 'date,description,amount,currency,fx_rate\n2026-01-15,Grocery Store,-120.50,USD,\n2026-01-20,Salary Payment,5000.00,EUR,1.08\n'
+                  const blob = new Blob([csv], { type: 'text/csv' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = 'template.csv'
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }}
+              >
+                <Download size={14} />
+              </button>
+              <button
+                type="button"
+                className={`h-7 w-7 inline-flex items-center justify-center rounded-md border transition-colors ${
+                  dragOver
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+                title={t('import.addFiles')}
+                aria-label={t('import.addFiles')}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Plus size={15} />
+              </button>
+            </div>
+          )}
         </div>
 
         {importHistory.length === 0 ? (
-          <div className="bg-card rounded-xl border border-border p-8 text-center text-muted-foreground">
+          <div className={`bg-card rounded-xl border p-8 text-center text-muted-foreground ${dragOver ? 'border-primary border-dashed' : 'border-border'}`}>
             {t('import.noHistory')}
           </div>
         ) : (
-          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className={`bg-card rounded-xl border shadow-sm overflow-hidden ${dragOver ? 'border-primary border-dashed' : 'border-border'}`}>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -605,7 +648,18 @@ export function ImportSection() {
                         {log.format || '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{log.account_name || '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                      {(() => {
+                        const acc = accountsList?.find((a) => a.id === log.account_id)
+                        if (!acc) return log.account_name || '—'
+                        return (
+                          <span className="flex items-center gap-2 min-w-0">
+                            <AccountIcon account={acc} />
+                            <span className="truncate text-foreground">{getAccountName(acc)}</span>
+                          </span>
+                        )
+                      })()}
+                    </td>
                     <td className="px-3 sm:px-4 py-3 text-right text-foreground">{log.transaction_count}</td>
                     <td className="px-4 py-3 text-right text-emerald-600 font-medium hidden sm:table-cell">
                       {formatCurrency(log.total_credit, userCurrency, locale)}
