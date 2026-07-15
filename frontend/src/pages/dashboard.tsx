@@ -4,7 +4,6 @@ import { currentMonth, shiftMonth, monthLastDay, monthLabel, monthRange } from '
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { format } from 'date-fns'
 import { dashboard, transactions, budgets, categories as categoriesApi, categoryGroups as categoryGroupsApi, accounts as accountsApi, goals as goalsApi, groups as groupsApi, payees as payeesApi, rules as rulesApi } from '@/lib/api'
 import { invalidateFinancialQueries } from '@/lib/invalidate-queries'
 import { toast } from 'sonner'
@@ -17,8 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { MonthPicker } from '@/components/ui/monthpicker'
 import {
   Table,
   TableBody,
@@ -36,7 +33,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { CheckCircle2, CalendarIcon, Paperclip, Target, ArrowUpDown, HelpCircle, EyeClosed, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
+import { CheckCircle2, Paperclip, Target, ArrowUpDown, HelpCircle, EyeClosed, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ICON_MAP } from '@/lib/category-icons'
 import { PageHeader } from '@/components/page-header'
@@ -48,9 +45,10 @@ import { RuleDialog, type RuleDialogInitialData } from '@/components/rule-dialog
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useToggleSet } from '@/hooks/use-toggle-set'
 import { buildCategoryGroupIndex, rollupByGroup } from '@/lib/category-groups'
+import { usePageDateFilter } from '@/hooks/use-page-date-filter'
+import { DateRangeFilter } from '@/components/date-range-filter'
 import { useAuth } from '@/contexts/auth-context'
 import { useCollectionFilter } from '@/contexts/collection-filter-context'
-import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
 import type { Rule, Transaction } from '@/types'
 
 function formatCurrency(value: number, currency = 'USD', locale = 'en-US') {
@@ -90,7 +88,7 @@ function parseMonthFromParams(params: URLSearchParams): string | null {
 
 
 export default function DashboardPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { mask, privacyMode, MASK } = usePrivacyMode()
   const { user } = useAuth()
@@ -146,16 +144,30 @@ export default function DashboardPage() {
   const [createRuleOpen, setCreateRuleOpen] = useState(false)
   const [createRuleInitialData, setCreateRuleInitialData] = useState<RuleDialogInitialData | undefined>(undefined)
   const queryClient = useQueryClient()
-  const [headerCalOpen, setHeaderCalOpen] = useState(false)
   const [hoveredDay, setHoveredDay] = useState<number | null>(null)
-  const dateFnsLocale = resolveDateFnsLocale(i18n.resolvedLanguage ?? i18n.language)
   const { from: monthStart, to: monthEnd } = monthRange(selectedMonth)
   const monthParam = monthStart
   const monthLabelStr = monthLabel(selectedMonth, dateLocale)
 
+  // The dashboard is month-based (budgets, MoM comparisons), so the global
+  // date filter runs in month-only mode here — still cloud-persisted, so the
+  // last viewed month is restored next visit. A ?month deep link wins.
+  const pageDateFilter = usePageDateFilter('dashboard', { mode: 'month', month: currentMonth() })
+  const urlHadMonthRef = useRef(parseMonthFromParams(searchParams) !== null)
+  const userTouchedMonthRef = useRef(false)
+  const cloudRestoredRef = useRef(false)
+  useEffect(() => {
+    if (!pageDateFilter.isLoaded || cloudRestoredRef.current) return
+    cloudRestoredRef.current = true
+    if (urlHadMonthRef.current || userTouchedMonthRef.current) return
+    if (pageDateFilter.value.mode === 'month') setSelectedMonth(pageDateFilter.value.month)
+  }, [pageDateFilter.isLoaded, pageDateFilter.value])
+
   const handleMonthChange = (newMonth: string) => {
+    userTouchedMonthRef.current = true
     setSelectedMonth(newMonth)
-}
+    pageDateFilter.setValue({ mode: 'month', month: newMonth })
+  }
 
   // Active Collection filter (issue #105): scope dashboard cards to its
   // accounts. undefined when "All accounts".
@@ -556,29 +568,13 @@ export default function DashboardPage() {
               className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:border-border hover:text-foreground transition-all text-base"
               onClick={() => handleMonthChange(shiftMonth(selectedMonth, -1))}
             >&#8249;</button>
-            <Popover open={headerCalOpen} onOpenChange={setHeaderCalOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center gap-2 border border-border rounded-lg px-3 py-1.5 text-sm bg-card text-foreground hover:bg-muted/50 transition-all cursor-pointer min-w-[180px]"
-                >
-                  <CalendarIcon className="size-3.5 text-muted-foreground" />
-                  {new Date(selectedMonth + '-02').toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="center" className="w-auto p-0">
-                <MonthPicker
-                  locale={dateFnsLocale}
-                  selectedMonth={new Date(`${selectedMonth}-01T00:00:00`)}
-                  onMonthSelect={(date) => {
-                    if (!date) return
-                    const newMonth = format(date, 'yyyy-MM')
-                    setSelectedMonth(newMonth)
-                    setHeaderCalOpen(false)
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
+            <DateRangeFilter
+              value={{ mode: 'month', month: selectedMonth }}
+              onChange={(v) => { if (v.mode === 'month') handleMonthChange(v.month) }}
+              modes={['month']}
+              align="center"
+              className="min-w-[180px]"
+            />
             <button
               className="h-8 w-8 flex items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:border-border hover:text-foreground transition-all text-base"
               onClick={() => handleMonthChange(shiftMonth(selectedMonth, 1))}
