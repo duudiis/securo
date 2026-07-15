@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { SkeletonListCard } from '@/components/skeletons'
 
-const CROSSFADE_MS = 350
+const CROSSFADE_MS = 250
 
 /**
  * Loading surface with a real crossfade.
@@ -66,7 +66,11 @@ export function SkeletonSurface({
             // In flow while loading (defines the surface height); overlays the
             // mounting content during the crossfade. Not clipped — a hard
             // bottom chop mid-fade reads as a cut, a fading overhang doesn't.
-            revealed ? 'absolute inset-x-0 top-0 opacity-0 z-10' : 'opacity-100',
+            // The pulse freezes during the fade: children animating opacity
+            // against the fading overlay reads as flicker.
+            revealed
+              ? 'absolute inset-x-0 top-0 opacity-0 z-10 [&_[data-slot=skeleton]]:animate-none'
+              : 'opacity-100',
           )}
           style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
         >

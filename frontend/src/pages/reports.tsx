@@ -735,9 +735,17 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      {/* Per-tab surface: each tab remembers its own layout geometry, and
-          switching to a cached tab renders instantly with no fade. */}
-      <SkeletonSurface key={activeTab} skeleton={<ReportsSkeleton />} loading={isLoading}>
+      {/* Per-tab surface; switching to a cached tab renders instantly with no
+          fade. Gated on !data (not isLoading): the query is briefly DISABLED
+          while the tab's saved date filter loads, and disabled queries report
+          isLoading=false — which flashed zero-value content before the
+          skeleton. Wallet-only collections keep non-net-worth queries disabled
+          forever, so that case must not skeleton indefinitely. */}
+      <SkeletonSurface
+        key={activeTab}
+        skeleton={<ReportsSkeleton />}
+        loading={!data && !(noAccounts && activeTab !== 'net_worth')}
+      >
       {/* Hero Card */}
       <div className="bg-card rounded-xl border border-border shadow-sm mb-5">
         <div className="px-5 py-4">

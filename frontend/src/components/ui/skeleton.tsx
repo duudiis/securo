@@ -7,7 +7,7 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
       // Translucent so the shimmer reads as the same soft step on any surface
       // (card, popover, muted) in both themes — absolute colors went nearly
       // invisible on some dark surfaces.
-      className={cn("bg-muted-foreground/10 animate-pulse rounded-md", className)}
+      className={cn("bg-muted-foreground/10 animate-pulse [animation-duration:1.1s] rounded-md", className)}
       {...props}
     />
   )
