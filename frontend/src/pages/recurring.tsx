@@ -221,7 +221,7 @@ function RecurringTab() {
                           <Pencil size={13} />
                         </button>
                         <button
-                          className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                          className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                           onClick={() => deleteMutation.mutate(rt.id)}
                           disabled={deleteMutation.isPending}
                           title={t('common.delete')}

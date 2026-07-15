@@ -685,7 +685,7 @@ function TransactionForm({
         </div>
       )}
       {isSynced && (
-        <div className="flex items-center gap-2 p-3 text-sm bg-amber-50 border border-amber-200 rounded-md text-amber-700">
+        <div className="flex items-center gap-2 p-3 text-sm bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-md text-amber-700">
           {t('transactions.syncedInfo')}
         </div>
       )}

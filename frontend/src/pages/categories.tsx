@@ -160,7 +160,7 @@ export default function CategoriesPage() {
           </button>
           {!cat.is_system && (
             <button
-              className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-colors"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
               onClick={() => deleteCatMutation.mutate(cat.id)}
               disabled={deleteCatMutation.isPending}
               title={t('common.delete')}
@@ -236,7 +236,7 @@ export default function CategoriesPage() {
                       </button>
                       {!group.is_system && (
                         <button
-                          className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                          className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                           onClick={() => deleteGroupMutation.mutate(group.id)}
                           disabled={deleteGroupMutation.isPending}
                           title={t('common.delete')}

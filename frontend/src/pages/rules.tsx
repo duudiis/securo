@@ -414,7 +414,7 @@ export default function RulesPage() {
                   {canWrite && (
                     <div className="flex items-center gap-1 shrink-0">
                       <button
-                        className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                        className="p-1.5 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                         onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(rule.id) }}
                         disabled={deleteMutation.isPending}
                         title={t('common.delete')}

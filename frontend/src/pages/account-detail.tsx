@@ -1393,7 +1393,7 @@ export default function AccountDetailPage() {
                               </span>
                             )}
                             {isPending && (
-                              <span className="ml-2 inline-flex items-center gap-1 text-xs text-amber-600 font-normal bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+                              <span className="ml-2 inline-flex items-center gap-1 text-xs text-amber-600 font-normal bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded px-1.5 py-0.5">
                                 <Clock className="h-3 w-3" />
                                 {t('transactions.pending')}
                               </span>
