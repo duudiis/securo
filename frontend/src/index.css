@@ -133,6 +133,33 @@
   h1, h2, h3 {
     letter-spacing: -0.035em;
   }
+
+  /* Slim, theme-aware scrollbars everywhere (replaces the chunky browser
+     default). WebKit gets a 8px gutter with a 4px pill thumb (transparent
+     border + content-box clip); Firefox uses its native thin variant. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--muted-foreground) 60%, transparent);
+  }
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 /* Recharts focuses its wrapper/surface on click; on macOS this draws a
