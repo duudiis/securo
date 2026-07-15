@@ -6,6 +6,7 @@ import { currentMonth, monthRange, monthFromRange } from '@/lib/month-utils'
 import { resolveDateRange, type DateFilterValue } from '@/lib/date-filter'
 import { usePageDateFilter } from '@/hooks/use-page-date-filter'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { SkeletonTableRows } from '@/components/skeletons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
@@ -1288,7 +1289,7 @@ export default function TransactionsPage() {
 
       {/* Table */}
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
-        <SkeletonSurface pageKey="transactions" loading={!data}>
+        <SkeletonSurface skeleton={<SkeletonTableRows rows={10} />} loading={!data}>
           <div className="overflow-x-auto">
           <Table style={{ tableLayout: 'fixed' }}>
             <TableHeader>

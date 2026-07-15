@@ -82,7 +82,7 @@ export default function CollectionsPage() {
       />
       <p className="text-sm text-muted-foreground mb-5 max-w-2xl">{t('collections.subtitle')}</p>
 
-      <SkeletonSurface pageKey="collections" loading={isLoading}>
+      <SkeletonSurface loading={isLoading}>
       <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
         {list.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">

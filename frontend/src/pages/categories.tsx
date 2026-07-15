@@ -17,6 +17,7 @@ import type { Category, CategoryGroup } from '@/types'
 import { Pencil, Trash2, Plus, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { SkeletonListCard } from '@/components/skeletons'
 import { CategoryIcon } from '@/components/category-icon'
 import { IconPicker } from '@/components/icon-picker'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -178,7 +179,7 @@ export default function CategoriesPage() {
     <div>
       <PageHeader section={t('categories.title')} title={t('categories.title')} />
 
-      <SkeletonSurface pageKey="categories" loading={groupsLoading || categoriesLoading}>
+      <SkeletonSurface skeleton={<SkeletonListCard rows={9} header />} loading={groupsLoading || categoriesLoading}>
       <SectionCard>
         <SectionHeader
           title={t('categories.title')}

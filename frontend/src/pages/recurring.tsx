@@ -143,7 +143,7 @@ function RecurringTab() {
 
   return (
     <>
-      <SkeletonSurface pageKey="recurring" loading={isLoading}>
+      <SkeletonSurface loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('recurring.title')}

@@ -1,54 +1,33 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import {
-  captureSnapshot,
-  loadSnapshot,
-  saveSnapshot,
-  type SkeletonSnapshot,
-} from '@/lib/skeleton-snapshot'
+import { SkeletonListCard } from '@/components/skeletons'
 
 const CROSSFADE_MS = 350
-// Wait for charts/async widgets to settle before photographing the layout.
-const CAPTURE_DELAY_MS = 900
 
 /**
- * Loading surface with self-maintaining, pixel-accurate skeletons.
+ * Loading surface with a real crossfade.
  *
- * While `loading`, replays the geometry captured from this page's last real
- * render as shimmer blocks (see lib/skeleton-snapshot). When loading ends the
- * content mounts underneath and the two layers CROSSFADE — skeleton fades out
- * while content fades in, no cut. After the reveal the freshly rendered
- * layout is re-captured, so the skeleton always tracks the current UI.
- *
- * The skeleton only shows for the initial load of a mount; later refetches
- * (pagination, filter changes) keep the content visible.
+ * While `loading`, renders the page's structural skeleton (composed from
+ * components/skeletons to mirror the page's known layout). When loading ends
+ * the content mounts underneath and the two layers CROSSFADE — the skeleton
+ * fades out while the content fades in, no cut. The skeleton only shows for
+ * the initial load of a mount; later refetches keep content visible.
  */
 export function SkeletonSurface({
-  pageKey,
   loading,
+  skeleton,
   className,
   children,
 }: {
-  pageKey: string
   loading: boolean
+  /** Structural placeholder mirroring this page's layout. Defaults to a list card. */
+  skeleton?: React.ReactNode
   className?: string
   children: React.ReactNode
 }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [snapshot, setSnapshot] = useState<SkeletonSnapshot | null>(null)
-  // Whether this mount ever showed a skeleton (loading on first paint).
-  const startedLoadingRef = useRef(loading)
   // revealed: content is (becoming) visible. skeletonGone: overlay unmounted.
   const [revealed, setRevealed] = useState(!loading)
   const [skeletonGone, setSkeletonGone] = useState(!loading)
-
-  // Look up the stored geometry for this page at the current width.
-  useLayoutEffect(() => {
-    if (!startedLoadingRef.current) return
-    const width = containerRef.current?.getBoundingClientRect().width ?? 0
-    setSnapshot(loadSnapshot(pageKey, width))
-  }, [pageKey])
 
   // Loading finished → mount content invisible, then crossfade both layers.
   useEffect(() => {
@@ -67,65 +46,30 @@ export function SkeletonSurface({
     }
   }, [loading, revealed])
 
-  // Re-photograph the real layout after every reveal so the next visit's
-  // skeleton matches the UI as it is today.
-  useEffect(() => {
-    if (!revealed || loading) return
-    const timer = setTimeout(() => {
-      const container = containerRef.current
-      const content = contentRef.current
-      if (!container || !content) return
-      const snap = captureSnapshot(content)
-      if (snap) saveSnapshot(pageKey, container.getBoundingClientRect().width, snap)
-    }, CAPTURE_DELAY_MS)
-    return () => clearTimeout(timer)
-  }, [revealed, loading, pageKey])
-
-  const mountContent = !loading || revealed
-
   return (
-    <div
-      ref={containerRef}
-      className={cn('relative', className)}
-      style={!skeletonGone ? { minHeight: snapshot?.h ?? 320 } : undefined}
-    >
+    <div className={cn('relative', className)}>
       <div
-        ref={contentRef}
         className={cn(
           'transition-opacity motion-reduce:transition-none',
           revealed ? 'opacity-100' : 'opacity-0',
         )}
         style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
       >
-        {mountContent ? children : null}
+        {!loading || revealed ? children : null}
       </div>
 
       {!skeletonGone && (
         <div
           aria-hidden
           className={cn(
-            'absolute inset-x-0 top-0 overflow-hidden pointer-events-none z-10',
-            'transition-opacity motion-reduce:transition-none',
-            revealed ? 'opacity-0' : 'opacity-100',
+            'pointer-events-none transition-opacity motion-reduce:transition-none',
+            // In flow while loading (defines the surface height); overlays the
+            // mounting content during the crossfade.
+            revealed ? 'absolute inset-0 overflow-hidden opacity-0 z-10' : 'opacity-100',
           )}
-          style={{ transitionDuration: `${CROSSFADE_MS}ms`, height: snapshot?.h ?? 320 }}
+          style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
         >
-          {snapshot ? (
-            snapshot.rects.map((r, i) => (
-              <div
-                key={i}
-                className="absolute bg-accent animate-pulse"
-                style={{ left: r.x, top: r.y, width: r.w, height: r.h, borderRadius: r.r }}
-              />
-            ))
-          ) : (
-            // First-ever visit: no geometry yet — generic placeholder rows.
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-14 rounded-xl bg-accent animate-pulse" />
-              ))}
-            </div>
-          )}
+          {skeleton ?? <SkeletonListCard rows={5} />}
         </div>
       )}
     </div>

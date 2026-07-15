@@ -54,6 +54,7 @@ import { CategoryIcon } from '@/components/category-icon'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { DetailPageSkeleton } from '@/components/skeletons'
 import type { GroupMember, GroupSettlement, Transaction } from '@/types'
 
 function formatCurrency(value: number, currency = 'USD', locale = 'en-US') {
@@ -623,7 +624,7 @@ export default function GroupDetailPage() {
         }
       />
 
-      <SkeletonSurface pageKey="group-detail" loading={loadingGroup}>
+      <SkeletonSurface skeleton={<DetailPageSkeleton />} loading={loadingGroup}>
       <div className="space-y-4">
       {/* KPI row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">

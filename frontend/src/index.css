@@ -59,7 +59,9 @@
   --secondary-foreground: #F4F4F5;
   --muted: #2A2A2A;
   --muted-foreground: #A8ABB2;
-  --accent: #262638;
+  /* Near-neutral: the previous #262638 indigo tint read as an odd purple on
+     skeletons, hovers and inputs against the gray surfaces. */
+  --accent: #232326;
   --accent-foreground: #A5B4FC;
   --destructive: #FB7185;
   --destructive-foreground: #141414;
@@ -167,6 +169,25 @@
   *::-webkit-scrollbar-corner {
     background: transparent;
   }
+}
+
+/* Theme switching: while .theme-transition is on <html> (added for the
+   duration of a toggle), every element animates its colors with ONE shared
+   timing — otherwise only elements that happen to have transition-colors
+   animate, each with its own duration, and the rest snap (glitchy mix of
+   instant tables/inputs and lagging buttons). */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition:
+    background-color 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease,
+    fill 300ms ease,
+    stroke 300ms ease,
+    outline-color 300ms ease,
+    box-shadow 300ms ease !important;
 }
 
 /* Recharts focuses its wrapper/surface on click; on macOS this draws a

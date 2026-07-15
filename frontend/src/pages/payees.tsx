@@ -41,6 +41,7 @@ import {
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { SkeletonTableCard } from '@/components/skeletons'
 import { calculateRangeSelection } from '@/lib/selection-utils'
 import { Search, Star, Merge, Trash2, ArrowRight, ListFilter, X, Check } from 'lucide-react'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
@@ -453,7 +454,7 @@ export default function PayeesPage() {
       </div>
 
       {/* Table */}
-      <SkeletonSurface pageKey="payees" loading={isLoading}>
+      <SkeletonSurface skeleton={<SkeletonTableCard rows={8} />} loading={isLoading}>
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
         <Table>
             <TableHeader>

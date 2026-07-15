@@ -296,7 +296,7 @@ export default function RulesPage() {
     <div>
       <PageHeader section={t('rules.section')} title={t('nav.rules')} />
 
-      <SkeletonSurface pageKey="rules" loading={isLoading}>
+      <SkeletonSurface loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('rules.sectionTitle')}

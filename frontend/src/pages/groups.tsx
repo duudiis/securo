@@ -153,7 +153,7 @@ export default function GroupsPage() {
         ))}
       </div>
 
-      <SkeletonSurface pageKey="groups" loading={isLoading}>
+      <SkeletonSurface loading={isLoading}>
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
         {visibleGroups.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">

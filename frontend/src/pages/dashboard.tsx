@@ -47,6 +47,7 @@ import { useToggleSet } from '@/hooks/use-toggle-set'
 import { buildCategoryGroupIndex, rollupByGroup } from '@/lib/category-groups'
 import { usePageDateFilter } from '@/hooks/use-page-date-filter'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { DashboardSkeleton } from '@/components/skeletons'
 import { DateRangeFilter } from '@/components/date-range-filter'
 import { useAuth } from '@/contexts/auth-context'
 import { useCollectionFilter } from '@/contexts/collection-filter-context'
@@ -585,7 +586,7 @@ export default function DashboardPage() {
       />
 
       <SkeletonSurface
-        pageKey="dashboard"
+        skeleton={<DashboardSkeleton />}
         loading={summaryLoading || spendingLoading || balanceHistoryLoading}
       >
       {/* Hero Card: Savings Rate + Uncategorized CTA */}

@@ -259,7 +259,7 @@ export default function GoalsPage() {
         ))}
       </div>
 
-      <SkeletonSurface pageKey="goals" loading={isLoading}>
+      <SkeletonSurface loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('goals.title')}

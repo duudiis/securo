@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowLeftRight, CalendarClock, ChevronLeft, ChevronRight, Clock, EyeClosed, HelpCircle, Paperclip, Pencil, X } from 'lucide-react'
 import { CategoryIcon } from '@/components/category-icon'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { DetailPageSkeleton } from '@/components/skeletons'
 import { TransactionDialog, extractApiError } from '@/components/transaction-dialog'
 import { TransferDialog } from '@/components/transfer-dialog'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
@@ -920,7 +921,7 @@ export default function AccountDetailPage() {
         </div>
       </div>
 
-      <SkeletonSurface pageKey="account-detail" loading={isLoading}>
+      <SkeletonSurface skeleton={<DetailPageSkeleton />} loading={isLoading}>
       {account?.is_closed && (
         <div className="flex items-center justify-between rounded-lg border border-border bg-muted px-4 py-3 mb-6">
           <span className="text-sm text-muted-foreground">{t('accounts.closedBanner')}</span>

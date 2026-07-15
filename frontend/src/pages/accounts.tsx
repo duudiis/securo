@@ -37,6 +37,7 @@ import {
 import { AccountIcon, ConnectionLogo, getAccountTypeConfig } from '@/components/account-icon'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { AccountsSkeleton } from '@/components/skeletons'
 import { ImportSection } from '@/pages/import'
 import { BankConnectDialog } from '@/components/bank-connect-dialog'
 import { ConnectorSelectDialog, type Provider } from '@/components/connector-select-dialog'
@@ -246,7 +247,7 @@ export default function AccountsPage() {
         }
       />
 
-      <SkeletonSurface pageKey="accounts" loading={isLoading}>
+      <SkeletonSurface skeleton={<AccountsSkeleton />} loading={isLoading}>
         <div className="space-y-6">
           {/* Manual accounts — same presentation as connected ones, just
               without a connection header (no special labeled box). */}

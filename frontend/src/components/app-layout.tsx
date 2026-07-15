@@ -177,7 +177,15 @@ export function AppLayout() {
     ? resolvedThemeLocal === 'dark'
     : typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-color-scheme: dark)').matches
-  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
+  const toggleTheme = () => {
+    // Synchronize every element's color change (see .theme-transition in
+    // index.css) — without it only transition-colors elements animate, each
+    // at its own pace, and everything else snaps.
+    const root = document.documentElement
+    root.classList.add('theme-transition')
+    setTheme(isDark ? 'light' : 'dark')
+    window.setTimeout(() => root.classList.remove('theme-transition'), 350)
+  }
 
   const { data: accountsList } = useQuery({
     queryKey: ['accounts'],
@@ -403,7 +411,7 @@ export function AppLayout() {
                   className={cn(
                     'flex items-center gap-3 text-[13px] font-medium transition-all rounded-lg px-3 py-2',
                     isActive
-                      ? 'bg-primary/[0.08] text-primary border-l-[3px] border-primary pl-[9px]'
+                      ? 'bg-primary/[0.08] text-primary'
                       : 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
                   )}
                 >
