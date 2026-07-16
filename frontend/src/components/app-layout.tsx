@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, Suspense } from 'react'
 import { flushSync } from 'react-dom'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -457,12 +457,12 @@ export function AppLayout() {
             {/* Active-collection filter (issue #105): sticky bar above the
                 content so the scope is visible right where the data is. */}
             <CollectionSelector variant="header" />
-            {/* Keyed by pathname so each navigation replays the entrance
-                animation. Query-param-only changes (filters, month) keep the
-                same key and don't re-animate. */}
-            <div key={location.pathname} className="page-enter">
+            {/* Local Suspense so a not-yet-loaded page chunk only affects the
+                content area — the sidebar/chrome never blanks. Navigation
+                crossfade is handled in App (AppRoutes). */}
+            <Suspense fallback={null}>
               <Outlet />
-            </div>
+            </Suspense>
           </div>
         </main>
       </div>
