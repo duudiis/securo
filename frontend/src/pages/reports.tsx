@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale } from '@/hooks/use-display-locale'
 import { useQuery } from '@tanstack/react-query'
@@ -223,7 +223,19 @@ export default function ReportsPage() {
     }
   })()
 
+  // Sliding tab underline + directional content slide.
+  const tabBarRef = useRef<HTMLDivElement>(null)
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 })
+  const [slideDir, setSlideDir] = useState<'left' | 'right'>('right')
+  useLayoutEffect(() => {
+    const el = tabBarRef.current?.querySelector<HTMLElement>(`[data-tab="${activeTab}"]`)
+    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
+  }, [activeTab])
+
   const handleSelectTab = (key: string) => {
+    if (key === activeTab) return
+    const order = REPORT_TABS.map((tab) => tab.key)
+    setSlideDir(order.indexOf(key) > order.indexOf(activeTab) ? 'right' : 'left')
     setActiveTab(key)
     setCompositionView(key === 'net_worth' ? 'netWorth' : 'net')
     setSparklinePage(0)
@@ -707,11 +719,12 @@ export default function ReportsPage() {
         }
       />
 
-      {/* Tab Bar */}
-      <div className="flex items-center gap-1 mb-5 border-b border-border">
+      {/* Tab Bar — one shared underline that slides between tabs. */}
+      <div ref={tabBarRef} className="relative flex items-center gap-1 mb-5 border-b border-border">
         {REPORT_TABS.map((tab) => (
           <button
             key={tab.key}
+            data-tab={tab.key}
             onClick={() => { if (tab.enabled) handleSelectTab(tab.key) }}
             disabled={!tab.enabled}
             className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
@@ -728,11 +741,12 @@ export default function ReportsPage() {
                 {t('reports.comingSoon')}
               </span>
             )}
-            {activeTab === tab.key && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
-            )}
           </button>
         ))}
+        <span
+          className="absolute bottom-0 h-0.5 bg-primary rounded-full transition-[left,width] duration-300 ease-out"
+          style={{ left: indicator.left, width: indicator.width }}
+        />
       </div>
 
       {/* Per-tab surface; switching to a cached tab renders instantly with no
@@ -743,6 +757,7 @@ export default function ReportsPage() {
           forever, so that case must not skeleton indefinitely. */}
       <SkeletonSurface
         key={activeTab}
+        className={slideDir === 'right' ? 'tab-enter-right' : 'tab-enter-left'}
         skeleton={<ReportsSkeleton />}
         loading={!data && !(noAccounts && activeTab !== 'net_worth')}
       >

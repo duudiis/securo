@@ -331,6 +331,10 @@ export default function TransactionsPage() {
   // Keep the URL in sync with the current filters, so that the current page can be
   // refreshed, bookmarked or shared.
   useEffect(() => {
+    // Don't write the URL until the saved filters have been restored —
+    // otherwise the default month-to-date briefly flashes into the query
+    // string on load before the cloud-saved filter replaces it.
+    if (!filtersRestored) return
     const params = new URLSearchParams(
       [
         ['q', searchQuery],
@@ -354,6 +358,7 @@ export default function TransactionsPage() {
       params.size ? `?${params}` : window.location.pathname,
     );
   }, [
+    filtersRestored,
     searchQuery,
     tagFilters,
     filterPayee,

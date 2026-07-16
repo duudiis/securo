@@ -179,13 +179,51 @@
     animation: securo-page-leave 110ms ease-in forwards;
   }
   .page-enter {
+    /* No will-change: transform — it would create a containing block for the
+       whole page's lifetime, breaking position:fixed descendants (e.g. the
+       transactions bulk bar). transform/opacity are composited regardless. */
     animation: securo-page-enter 380ms cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform, opacity;
   }
   @media (prefers-reduced-motion: reduce) {
     .page-leave,
     .page-enter {
       animation-duration: 1ms;
+    }
+  }
+
+  /* Reports tab switch: content slides in from the side matching the
+     direction of travel (later tab → in from the right, earlier → left).
+     Horizontal overflow during the slide is clipped by main (overflow-x). */
+  @keyframes securo-tab-enter-right {
+    from {
+      opacity: 0;
+      transform: translateX(26px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  @keyframes securo-tab-enter-left {
+    from {
+      opacity: 0;
+      transform: translateX(-26px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .tab-enter-right {
+    animation: securo-tab-enter-right 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .tab-enter-left {
+    animation: securo-tab-enter-left 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tab-enter-right,
+    .tab-enter-left {
+      animation: none;
     }
   }
 
