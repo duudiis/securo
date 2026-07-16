@@ -375,7 +375,7 @@ export function AppLayout() {
               primary identity, the user email + role as the secondary
               line, and combines workspace switching with all the
               account actions that used to live in a separate dropdown. */}
-          <div className="px-3 pt-1">
+          <div className="px-3 pt-1 pb-3">
             <WorkspaceSwitcher agentsEnabled={agentsEnabled} />
           </div>
 

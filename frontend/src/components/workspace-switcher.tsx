@@ -94,6 +94,7 @@ export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
   const { user, logout } = useAuth()
   const avatarUrl = useAvatar()
   const [createOpen, setCreateOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [newName, setNewName] = useState('')
 
   const currentLang = resolveSupportedLang(i18n.resolvedLanguage ?? i18n.language)
@@ -130,12 +131,12 @@ export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm hover:bg-hover transition-colors text-left">
-            <Avatar className="size-8 shrink-0">
+          <button className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm hover:bg-hover transition-colors text-left focus-visible:outline-none">
+            <Avatar className="size-6 shrink-0">
               {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
-              <AvatarFallback className="text-xs font-semibold">
+              <AvatarFallback className="text-[10px] font-semibold">
                 {(user.preferences?.display_name || user.email).charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -150,7 +151,7 @@ export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
                 )}
               </p>
             </div>
-            <ChevronUp size={14} className="text-sidebar-muted/60 shrink-0" />
+            <ChevronUp size={14} className={`text-sidebar-muted/60 shrink-0 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-64" side="top">
@@ -231,7 +232,10 @@ export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
               <span className="flex-1">{t('nav.groupSetup')}</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent className="w-44">
+              <DropdownMenuSubContent sideOffset={8} className="w-44">
+                <DropdownMenuLabel className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+                  {t('nav.groupSetup')}
+                </DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => navigate('/categories')} className="flex items-center gap-2">
                   <Tag size={14} />
                   {t('nav.categories')}
@@ -272,7 +276,7 @@ export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
               </span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent className="w-40">
+              <DropdownMenuSubContent sideOffset={8} className="w-40">
                 <DropdownMenuLabel className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
                   {t('setup.language')}
                 </DropdownMenuLabel>
