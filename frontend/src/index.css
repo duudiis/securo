@@ -227,27 +227,6 @@
     }
   }
 
-  /* Composition donut: quick fade + scale when switching modes (recharts'
-     own grow animation is disabled — it was the slow delay). */
-  @keyframes securo-donut-swap {
-    from {
-      opacity: 0;
-      transform: scale(0.92);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  .donut-swap {
-    animation: securo-donut-swap 240ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .donut-swap {
-      animation: none;
-    }
-  }
-
   /* Buttons read as clickable everywhere — browsers default <button> to the
      arrow cursor and only some call sites added cursor-pointer by hand. */
   button:not(:disabled),

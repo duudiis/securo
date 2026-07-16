@@ -1195,10 +1195,7 @@ export default function ReportsPage() {
                   const donutTotal = innerDonutData.reduce((s, d) => s + d.value, 0)
                   return (
                     <div className="flex flex-col items-center">
-                      {/* Keyed by mode so switching composition replays a quick
-                          fade+scale — recharts' own animation is off (its
-                          default 1.5s sweep was the delay). */}
-                      <div key={compositionView} className="donut-swap relative" style={{ width: 200, height: 200 }}>
+                      <div className="relative" style={{ width: 200, height: 200 }}>
                         <PieChart width={200} height={200}>
                             <Pie
                               data={innerDonutData}
@@ -1210,7 +1207,8 @@ export default function ReportsPage() {
                               dataKey="value"
                               stroke="var(--card)"
                               strokeWidth={hasOuter ? 2 : 0}
-                              isAnimationActive={false}
+                              animationDuration={350}
+                              animationEasing="ease-out"
                             >
                               {innerDonutData.map((entry, idx) => (
                                 <Cell key={idx} fill={entry.color} />
@@ -1227,7 +1225,8 @@ export default function ReportsPage() {
                                 dataKey="value"
                                 stroke="var(--card)"
                                 strokeWidth={2}
-                                isAnimationActive={false}
+                                animationDuration={350}
+                                animationEasing="ease-out"
                               >
                                 {outerDonutData.map((entry, idx) => {
                                   const toggleId = entry.groupId ?? entry.memberOfGroupId
