@@ -14,13 +14,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import type { Budget, Category, CategoryGroup } from '@/types'
+import type { Budget } from '@/types'
 import { Pencil, Trash2, Plus, Repeat, CalendarIcon, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { MonthPicker } from '@/components/ui/monthpicker'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { BudgetsSkeleton } from '@/components/skeletons'
 import { CategoryIcon } from '@/components/category-icon'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
@@ -56,47 +57,6 @@ function SectionHeader({ title, action }: { title: string; action?: React.ReactN
   )
 }
 
-/**
- * Placeholder data for skeleton mask mode: while loading, the real group/row
- * components render these and the [data-skeletonize] mask turns every leaf
- * into a shimmer bar. Text only needs representative widths — never visible.
- * Budgets resolve names/icons through categories + groups, so all three get
- * placeholders whose ids line up (budget.category_id -> category.group_id).
- */
-const PH_COLOR = '#8A8F9E'
-
-const PLACEHOLDER_CATEGORIES = Array.from({ length: 8 }, (_, i) => ({
-  id: `ph-cat-${i}`,
-  user_id: 'ph',
-  group_id: `ph-group-${i % 5}`,
-  name: ['Groceries', 'Monthly subscriptions', 'Rent', 'Dining out', 'Fuel', 'Utilities', 'Gym', 'Insurance'][i % 8],
-  icon: 'circle-help',
-  color: PH_COLOR,
-  is_system: false,
-  treat_as_transfer: false,
-  is_ignored: false,
-})) as unknown as Category[]
-
-const PLACEHOLDER_GROUPS = Array.from({ length: 5 }, (_, i) => ({
-  id: `ph-group-${i}`,
-  user_id: 'ph',
-  name: ['Essentials', 'Lifestyle & entertainment', 'Home', 'Transportation', 'Health'][i],
-  icon: 'circle-help',
-  color: PH_COLOR,
-  position: i,
-  is_system: false,
-  categories: PLACEHOLDER_CATEGORIES.filter((c) => c.group_id === `ph-group-${i}`),
-})) as unknown as CategoryGroup[]
-
-const PLACEHOLDER_BUDGETS = Array.from({ length: 8 }, (_, i) => ({
-  id: `ph-${i}`,
-  user_id: 'ph',
-  category_id: `ph-cat-${i}`,
-  amount: i % 3 === 0 ? 1250 : 480.5,
-  month: '2026-01-01',
-  is_recurring: i % 4 === 0,
-})) as unknown as Budget[]
-
 export default function BudgetsPage() {
   const { t, i18n } = useTranslation()
   const { mask } = usePrivacyMode()
@@ -127,18 +87,6 @@ export default function BudgetsPage() {
     queryKey: ['category-groups'],
     queryFn: groupsApi.list,
   })
-
-  // While loading, real rows render placeholder budgets/categories/groups and
-  // the skeleton mask shimmers them in place (see SkeletonSurface mask mode).
-  const isLoading = budgetsLoading || categoriesLoading || groupsLoading
-  // Memoized: displayBudgets is a dependency of the budgetGroups useMemo, so
-  // the empty-list fallback must be referentially stable across renders.
-  const displayBudgets = useMemo(
-    () => budgetsList ?? (isLoading ? PLACEHOLDER_BUDGETS : []),
-    [budgetsList, isLoading],
-  )
-  const displayCategories = categoriesList ?? (isLoading ? PLACEHOLDER_CATEGORIES : undefined)
-  const displayGroups = groupsList ?? (isLoading ? PLACEHOLDER_GROUPS : undefined)
 
   const createMutation = useMutation({
     mutationFn: (data: { category_id: string; amount: number; month: string; is_recurring?: boolean }) =>
@@ -174,21 +122,21 @@ export default function BudgetsPage() {
   // Budgets rolled up by category group; expanding a group reveals its budgets.
   const [expandedGroups, toggleGroup, setExpandedGroups] = useToggleSet()
   const groupIndex = useMemo(
-    () => buildCategoryGroupIndex(displayGroups, displayCategories),
-    [displayGroups, displayCategories],
+    () => buildCategoryGroupIndex(groupsList, categoriesList),
+    [groupsList, categoriesList],
   )
   const budgetGroups = useMemo(() => {
-    const { groups } = rollupByGroup(displayBudgets, (b) => b.category_id, groupIndex)
+    const { groups } = rollupByGroup(budgetsList ?? [], (b) => b.category_id, groupIndex)
     return groups.map(({ bucket, rows }) => ({
       bucket,
       rows,
       total: rows.reduce((sum, b) => sum + b.amount, 0),
     }))
-  }, [displayBudgets, groupIndex])
+  }, [budgetsList, groupIndex])
   const allExpanded = budgetGroups.every((g) => expandedGroups.has(g.bucket.id))
 
   const getCategoryDisplay = (categoryId: string) => {
-    const cat = displayCategories?.find((c) => c.id === categoryId)
+    const cat = categoriesList?.find((c) => c.id === categoryId)
     if (!cat) return <span>{categoryId}</span>
     return (
       <span className="flex items-center gap-2">
@@ -249,7 +197,7 @@ export default function BudgetsPage() {
         }
       />
 
-      <SkeletonSurface mask loading={isLoading}>
+      <SkeletonSurface skeleton={<BudgetsSkeleton />} loading={budgetsLoading || categoriesLoading || groupsLoading}>
       <SectionCard>
         <SectionHeader
           title={t('budgets.title')}
@@ -272,7 +220,7 @@ export default function BudgetsPage() {
             </div>
           }
         />
-        {displayBudgets.length > 0 ? (
+        {budgetsList && budgetsList.length > 0 ? (
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">

@@ -50,32 +50,6 @@ function SectionHeader({ title, action }: { title: string; action?: React.ReactN
   )
 }
 
-/**
- * Placeholder rows for skeleton mask mode: while loading, the real table rows
- * render these and the [data-skeletonize] mask turns every leaf into a
- * shimmer bar. Text only needs representative widths — it is never visible.
- * amount_primary stays null so the FX sub-row never renders while loading.
- */
-const PLACEHOLDER_RECURRING = Array.from({ length: 6 }, (_, i) => ({
-  id: `ph-${i}`,
-  user_id: 'ph',
-  account_id: null,
-  category_id: null,
-  description: ['Rent payment', 'Streaming subscription', 'Gym', 'Monthly salary', 'Internet bill', 'Cloud storage'][i],
-  amount: i % 3 === 0 ? 1450 : 39.9,
-  currency: 'USD',
-  type: i === 3 ? 'credit' : 'debit',
-  frequency: i === 2 ? 'weekly' : i === 5 ? 'yearly' : 'monthly',
-  day_of_month: 1,
-  start_date: '2026-01-01',
-  end_date: null,
-  is_active: i !== 4,
-  auto_generate: true,
-  next_occurrence: '2026-08-01',
-  amount_primary: null,
-  fx_rate_used: null,
-})) as unknown as RecurringTransaction[]
-
 export default function RecurringPage() {
   const { t } = useTranslation()
 
@@ -103,10 +77,6 @@ function RecurringTab() {
     queryKey: ['recurring'],
     queryFn: recurringApi.list,
   })
-
-  // While loading, real rows render placeholder recurring transactions and
-  // the skeleton mask shimmers them in place (see SkeletonSurface mask mode).
-  const displayRecurring = recurringList ?? (isLoading ? PLACEHOLDER_RECURRING : [])
 
   const { data: categoriesList } = useQuery({
     queryKey: ['categories'],
@@ -173,7 +143,7 @@ function RecurringTab() {
 
   return (
     <>
-      <SkeletonSurface mask loading={isLoading}>
+      <SkeletonSurface loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('recurring.title')}
@@ -197,7 +167,7 @@ function RecurringTab() {
             ) : undefined
           }
         />
-        {displayRecurring.length > 0 ? (
+        {recurringList && recurringList.length > 0 ? (
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -210,7 +180,7 @@ function RecurringTab() {
               </tr>
             </thead>
             <tbody>
-              {displayRecurring.map((rt) => (
+              {recurringList.map((rt) => (
                 <tr key={rt.id} className="border-b border-border last:border-0 hover:bg-hover transition-colors">
                   <td className="py-3 pl-4 sm:pl-5 text-sm font-medium text-foreground">{rt.description}</td>
                   <td className={`py-3 text-xs sm:text-sm font-bold tabular-nums ${rt.type === 'credit' ? 'text-emerald-600' : 'text-rose-500'}`}>

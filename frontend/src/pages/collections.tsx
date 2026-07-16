@@ -22,27 +22,6 @@ import type { Collection } from '@/types'
 
 const SWATCHES = ['#6366F1', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#64748B']
 
-// Placeholder rows fed through the real collection rows while loading; the
-// SkeletonSurface mask turns the rendered leaves into shimmer bars, so only
-// representative text widths matter (see components/skeleton-surface).
-const PLACEHOLDER_COLLECTIONS = Array.from({ length: 5 }, (_, i) => ({
-  id: `ph-${i}`,
-  name: [
-    'Everyday banking',
-    'Savings & investments',
-    'Cards',
-    'Business accounts overview',
-    'Cash',
-  ][i % 5],
-  icon: 'circle-help',
-  color: '#8A8F9E',
-  position: i,
-  account_ids: [],
-  account_count: 2 + (i % 4),
-  wallet_ids: [],
-  wallet_count: 0,
-})) as unknown as Collection[]
-
 export default function CollectionsPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -87,9 +66,7 @@ export default function CollectionsPage() {
     return map
   }, [accounts])
 
-  // While loading, placeholder rows render through the real markup and the
-  // skeleton mask shimmers them in place (see SkeletonSurface mask mode).
-  const list = collections ?? (isLoading ? PLACEHOLDER_COLLECTIONS : [])
+  const list = collections ?? []
 
   return (
     <div>
@@ -105,7 +82,7 @@ export default function CollectionsPage() {
       />
       <p className="text-sm text-muted-foreground mb-5 max-w-2xl">{t('collections.subtitle')}</p>
 
-      <SkeletonSurface mask loading={isLoading}>
+      <SkeletonSurface loading={isLoading}>
       <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
         {list.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">

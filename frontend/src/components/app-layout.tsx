@@ -407,7 +407,6 @@ export function AppLayout() {
               )
             })}
           </nav>
-
           </div>
 
           <UpdateAvailableBanner onOpen={() => setUpdateDialogOpen(true)} />

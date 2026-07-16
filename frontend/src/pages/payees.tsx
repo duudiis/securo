@@ -41,6 +41,7 @@ import {
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { PayeesSkeleton } from '@/components/skeletons'
 import { calculateRangeSelection } from '@/lib/selection-utils'
 import { Search, Star, Merge, Trash2, ArrowRight, ListFilter, X, Check } from 'lucide-react'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
@@ -51,26 +52,6 @@ import type { Payee } from '@/types'
 function formatCurrency(value: number, currency = 'USD', locale = 'en-US') {
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value)
 }
-
-// Placeholder rows fed through the real table rows while loading; the
-// SkeletonSurface mask turns the rendered leaves into shimmer bars, so only
-// representative text widths matter (see components/skeleton-surface).
-const PLACEHOLDER_PAYEES = Array.from({ length: 7 }, (_, i) => ({
-  id: `ph-${i}`,
-  name: [
-    'Grocery market downtown',
-    'Coffee shop',
-    'Monthly subscription service',
-    'Landlord',
-    'Online retailer',
-    'Utility company',
-    'Neighborhood pharmacy',
-  ][i % 7],
-  type: (['merchant', 'person', 'company'] as const)[i % 3],
-  is_favorite: false,
-  notes: null,
-  transaction_count: i % 3 === 0 ? 128 : 7,
-})) as unknown as Payee[]
 
 export default function PayeesPage() {
   const { t } = useTranslation()
@@ -272,9 +253,7 @@ export default function PayeesPage() {
     setLastSelectedId(id)
   }
 
-  // While loading, placeholder rows render through the real markup and the
-  // skeleton mask shimmers them in place (see SkeletonSurface mask mode).
-  const filtered = payeesList ?? (isLoading ? PLACEHOLDER_PAYEES : [])
+  const filtered = payeesList ?? []
 
   const toggleSelectAll = () => {
     if (!filtered.length) return
@@ -475,7 +454,7 @@ export default function PayeesPage() {
       </div>
 
       {/* Table */}
-      <SkeletonSurface mask loading={isLoading}>
+      <SkeletonSurface skeleton={<PayeesSkeleton />} loading={isLoading}>
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
         <Table>
             <TableHeader>

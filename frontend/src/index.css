@@ -178,58 +178,6 @@
   }
 }
 
-/* Skeleton mask: while a SkeletonSurface loads, the page renders its REAL
-   components with placeholder data and this mask turns every visible leaf
-   (text, icons, inputs, charts) into a shimmer block in place. The skeleton
-   IS the page's own layout — pixel-identical by construction. On reveal the
-   mask lifts with per-element transitions: bars fade out as content fades in. */
-@keyframes securo-skeleton-pulse {
-  50% {
-    opacity: 0.45;
-  }
-}
-
-[data-skeletonize] {
-  pointer-events: none;
-  user-select: none;
-}
-[data-skeletonize] :where(p, span, h1, h2, h3, h4, h5, h6, a, time, label, td, th, dt, dd, li, legend, figcaption, button, summary, strong, em, b):not(:has(*)) {
-  color: transparent !important;
-  background-color: color-mix(in srgb, var(--muted-foreground) 11%, transparent) !important;
-  border-color: transparent !important;
-  border-radius: 0.375rem;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  animation: securo-skeleton-pulse 0.85s ease-in-out infinite;
-}
-[data-skeletonize] :where(svg, img, video, canvas) {
-  opacity: 0 !important;
-}
-[data-skeletonize] :where(input, select, textarea) {
-  color: transparent !important;
-}
-[data-skeletonize] :where(input, select, textarea)::placeholder {
-  color: transparent !important;
-}
-/* Charts render nothing meaningful from placeholder data — shimmer the
-   container itself at its real size. */
-[data-skeletonize] .recharts-responsive-container {
-  background-color: color-mix(in srgb, var(--muted-foreground) 8%, transparent);
-  border-radius: 0.5rem;
-  animation: securo-skeleton-pulse 0.85s ease-in-out infinite;
-}
-
-/* Reveal phase: same targets get transitions so the unmasking crossfades. */
-[data-skeleton-reveal] :where(p, span, h1, h2, h3, h4, h5, h6, a, time, label, td, th, dt, dd, li, legend, figcaption, button, summary, strong, em, b):not(:has(*)) {
-  transition: background-color 280ms ease, color 280ms ease;
-}
-[data-skeleton-reveal] :where(svg, img, video, canvas) {
-  transition: opacity 280ms ease;
-}
-[data-skeleton-reveal] .recharts-responsive-container {
-  transition: background-color 280ms ease;
-}
-
 /* Theme switching uses the View Transitions API: the browser snapshots the
    old screen and crossfades to the new one in the compositor — the entire UI
    (sidebar, tables, inputs, charts) changes in ONE uniform fade with zero

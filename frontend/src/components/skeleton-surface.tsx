@@ -8,39 +8,29 @@ const CROSSFADE_MS = 250
 const MIN_SKELETON_MS = 650
 
 /**
- * Loading surface, two modes:
+ * Loading surface with a real crossfade.
  *
- * `mask` (preferred): the page renders its REAL components with placeholder
- * data while loading; this wrapper applies the [data-skeletonize] CSS mask
- * (see index.css) that turns every text/icon leaf into a shimmer bar in
- * place. The skeleton is the page's own markup — pixel-identical by
- * construction, maintained automatically. On reveal the mask lifts with
- * per-element transitions (bars fade out as real content fades in).
- *
- * Overlay (legacy, `skeleton` prop): a structural placeholder rendered while
- * loading, crossfaded with the mounting content. Used by chart-heavy pages
- * whose content can't render meaningfully from placeholders.
- *
- * Either way the skeleton only shows for the initial load of a mount; later
- * refetches keep content visible (remount with a `key` to re-skeleton).
+ * While `loading`, renders the page's structural skeleton (composed from
+ * components/skeletons to mirror the page's known layout). When loading ends
+ * the content mounts underneath and the two layers CROSSFADE — the skeleton
+ * fades out while the content fades in, no cut. The skeleton only shows for
+ * the initial load of a mount; later refetches keep content visible.
  */
 export function SkeletonSurface({
   loading,
-  mask = false,
   skeleton,
   className,
   children,
 }: {
   loading: boolean
-  /** Mask mode: children render placeholder data and get skeletonized in place. */
-  mask?: boolean
-  /** Overlay mode: structural placeholder mirroring this page's layout. */
+  /** Structural placeholder mirroring this page's layout. Defaults to a list card. */
   skeleton?: React.ReactNode
   className?: string
   children: React.ReactNode
 }) {
-  // masked → revealing (crossfade running) → done
-  const [phase, setPhase] = useState<'masked' | 'revealing' | 'done'>(loading ? 'masked' : 'done')
+  // revealed: content is (becoming) visible. skeletonGone: overlay unmounted.
+  const [revealed, setRevealed] = useState(!loading)
+  const [skeletonGone, setSkeletonGone] = useState(!loading)
   const skeletonShownAtRef = useRef<number | null>(null)
 
   // Stamp when the skeleton first became visible (declared before the reveal
@@ -51,47 +41,30 @@ export function SkeletonSurface({
     }
   }, [loading])
 
-  // Loading finished → wait out the minimum display time, then crossfade.
+  // Loading finished → wait out the skeleton's minimum display time, then
+  // mount content invisible and crossfade both layers.
   useEffect(() => {
-    if (loading || phase !== 'masked') return
+    if (loading || revealed) return
     const shownAt = skeletonShownAtRef.current
     const wait = shownAt ? Math.max(0, MIN_SKELETON_MS - (Date.now() - shownAt)) : 0
     let raf1 = 0
     let raf2 = 0
-    // Double rAF: content must paint in its pre-reveal state before the
-    // transition starts, otherwise the fade snaps.
+    // Double rAF: the content must paint at opacity 0 before the transition
+    // starts, otherwise the fade snaps.
     const delay = setTimeout(() => {
       raf1 = requestAnimationFrame(() => {
-        raf2 = requestAnimationFrame(() => setPhase('revealing'))
+        raf2 = requestAnimationFrame(() => setRevealed(true))
       })
     }, wait)
+    const timer = setTimeout(() => setSkeletonGone(true), wait + CROSSFADE_MS + 150)
     return () => {
       clearTimeout(delay)
       cancelAnimationFrame(raf1)
       cancelAnimationFrame(raf2)
+      clearTimeout(timer)
     }
-  }, [loading, phase])
+  }, [loading, revealed])
 
-  useEffect(() => {
-    if (phase !== 'revealing') return
-    const timer = setTimeout(() => setPhase('done'), CROSSFADE_MS + 150)
-    return () => clearTimeout(timer)
-  }, [phase])
-
-  if (mask) {
-    return (
-      <div
-        className={className}
-        data-skeletonize={phase === 'masked' ? '' : undefined}
-        data-skeleton-reveal={phase !== 'done' ? '' : undefined}
-        aria-busy={phase === 'masked' || undefined}
-      >
-        {children}
-      </div>
-    )
-  }
-
-  const revealed = phase !== 'masked'
   const contentMounted = !loading || revealed
 
   return (
@@ -106,13 +79,15 @@ export function SkeletonSurface({
         {contentMounted ? children : null}
       </div>
 
-      {phase !== 'done' && (
+      {!skeletonGone && (
         <div
           aria-hidden
           className={cn(
             'pointer-events-none transition-opacity motion-reduce:transition-none',
             // In flow while loading (defines the surface height); becomes an
-            // overlay the moment content mounts underneath. Not clipped — a
+            // overlay the moment content mounts underneath (which may be
+            // before the reveal — the skeleton holds its minimum display
+            // time on top of the already-mounted content). Not clipped — a
             // hard bottom chop mid-fade reads as a cut, a fading overhang
             // doesn't. The pulse freezes during the fade: children animating
             // opacity against the fading overlay reads as flicker.

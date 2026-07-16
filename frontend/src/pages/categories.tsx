@@ -17,6 +17,7 @@ import type { Category, CategoryGroup } from '@/types'
 import { Pencil, Trash2, Plus, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { CategoriesSkeleton } from '@/components/skeletons'
 import { CategoryIcon } from '@/components/category-icon'
 import { IconPicker } from '@/components/icon-picker'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -39,35 +40,6 @@ function SectionHeader({ title, titleExtra, action }: { title: string; titleExtr
     </div>
   )
 }
-
-/**
- * Placeholder groups (with nested categories) for skeleton mask mode: while
- * loading, the real group headers + category rows render these and the
- * [data-skeletonize] mask turns every leaf into a shimmer bar. Text only
- * needs representative widths — it is never visible.
- */
-const PH_COLOR = '#8A8F9E'
-
-const PLACEHOLDER_GROUPS = Array.from({ length: 3 }, (_, g) => ({
-  id: `ph-group-${g}`,
-  user_id: 'ph',
-  name: ['Essentials', 'Lifestyle & entertainment', 'Home'][g],
-  icon: 'circle-help',
-  color: PH_COLOR,
-  position: g,
-  is_system: false,
-  categories: Array.from({ length: g === 1 ? 2 : 3 }, (_, i) => ({
-    id: `ph-cat-${g}-${i}`,
-    user_id: 'ph',
-    group_id: `ph-group-${g}`,
-    name: ['Groceries', 'Monthly subscriptions', 'Rent', 'Dining out', 'Utilities', 'Transport', 'Gym', 'Insurance'][(g * 3 + i) % 8],
-    icon: 'circle-help',
-    color: PH_COLOR,
-    is_system: false,
-    treat_as_transfer: false,
-    is_ignored: false,
-  })),
-})) as unknown as CategoryGroup[]
 
 export default function CategoriesPage() {
   const { t } = useTranslation()
@@ -135,11 +107,6 @@ export default function CategoriesPage() {
       return next
     })
   }
-
-  // While loading, real rows render placeholder groups/categories and the
-  // skeleton mask shimmers them in place (see SkeletonSurface mask mode).
-  const isLoading = groupsLoading || categoriesLoading
-  const displayGroups = groups ?? (isLoading ? PLACEHOLDER_GROUPS : [])
 
   const ungrouped = categoriesList?.filter((c) => !c.group_id) ?? []
 
@@ -212,7 +179,7 @@ export default function CategoriesPage() {
     <div>
       <PageHeader section={t('categories.title')} title={t('categories.title')} />
 
-      <SkeletonSurface mask loading={isLoading}>
+      <SkeletonSurface skeleton={<CategoriesSkeleton />} loading={groupsLoading || categoriesLoading}>
       <SectionCard>
         <SectionHeader
           title={t('categories.title')}
@@ -247,7 +214,7 @@ export default function CategoriesPage() {
           }
         />
         <div>
-          {displayGroups.map((group) => {
+          {groups?.map((group) => {
             const isCollapsed = collapsedGroups.has(group.id)
             return (
               <div key={group.id}>

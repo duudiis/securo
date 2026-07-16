@@ -37,7 +37,7 @@ import {
 import { AccountIcon, ConnectionLogo, getAccountTypeConfig } from '@/components/account-icon'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
-import { placeholderAccounts } from '@/lib/skeleton-placeholders'
+import { AccountsSkeleton } from '@/components/skeletons'
 import { ImportSection } from '@/pages/import'
 import { BankConnectDialog } from '@/components/bank-connect-dialog'
 import { ConnectorSelectDialog, type Provider } from '@/components/connector-select-dialog'
@@ -70,8 +70,6 @@ function daysUntil(dateStr: string | null): number | null {
   today.setHours(0, 0, 0, 0)
   return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
-
-const PLACEHOLDER_ACCOUNTS = placeholderAccounts(4)
 
 export default function AccountsPage() {
   const { t } = useTranslation()
@@ -231,11 +229,8 @@ export default function AccountsPage() {
   })
 
   const isLoading = accountsLoading || connectionsLoading
-  // While loading, real rows render placeholder accounts and the skeleton
-  // mask shimmers them in place (see SkeletonSurface mask mode).
-  const displayAccounts = accountsList ?? (isLoading ? PLACEHOLDER_ACCOUNTS : [])
-  const manualAccounts = displayAccounts.filter((a) => a.connection_id === null)
-  const bankAccounts = displayAccounts.filter((a) => a.connection_id !== null)
+  const manualAccounts = accountsList?.filter((a) => a.connection_id === null) ?? []
+  const bankAccounts = accountsList?.filter((a) => a.connection_id !== null) ?? []
 
   return (
     <div className="space-y-6">
@@ -252,7 +247,7 @@ export default function AccountsPage() {
         }
       />
 
-      <SkeletonSurface mask loading={isLoading}>
+      <SkeletonSurface skeleton={<AccountsSkeleton />} loading={isLoading}>
         <div className="space-y-6">
           {/* Manual accounts — same presentation as connected ones, just
               without a connection header (no special labeled box). */}
