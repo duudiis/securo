@@ -1195,7 +1195,10 @@ export default function ReportsPage() {
                   const donutTotal = innerDonutData.reduce((s, d) => s + d.value, 0)
                   return (
                     <div className="flex flex-col items-center">
-                      <div className="relative" style={{ width: 200, height: 200 }}>
+                      {/* Keyed by mode so switching composition replays a quick
+                          fade+scale — recharts' own animation is off (its
+                          default 1.5s sweep was the delay). */}
+                      <div key={compositionView} className="donut-swap relative" style={{ width: 200, height: 200 }}>
                         <PieChart width={200} height={200}>
                             <Pie
                               data={innerDonutData}
