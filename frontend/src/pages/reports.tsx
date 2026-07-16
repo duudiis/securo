@@ -1207,6 +1207,7 @@ export default function ReportsPage() {
                               dataKey="value"
                               stroke="var(--card)"
                               strokeWidth={hasOuter ? 2 : 0}
+                              isAnimationActive={false}
                             >
                               {innerDonutData.map((entry, idx) => (
                                 <Cell key={idx} fill={entry.color} />
@@ -1223,6 +1224,7 @@ export default function ReportsPage() {
                                 dataKey="value"
                                 stroke="var(--card)"
                                 strokeWidth={2}
+                                isAnimationActive={false}
                               >
                                 {outerDonutData.map((entry, idx) => {
                                   const toggleId = entry.groupId ?? entry.memberOfGroupId
