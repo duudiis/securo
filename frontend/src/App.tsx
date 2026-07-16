@@ -1,7 +1,6 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { flushSync } from 'react-dom'
+import { lazy, Suspense, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route, Navigate, useLocation, type Location } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/contexts/auth-context'
@@ -78,22 +77,13 @@ function LoadingFallback() {
   return null
 }
 
-const reducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-
 /**
- * Routes with a real navigation crossfade. `displayLocation` lags the real
- * location and is committed inside document.startViewTransition() so the
- * browser snapshots the old screen, swaps to the new one, and crossfades
- * them — old page fades out while the new fades in. Only pathname changes
- * crossfade; query-param changes (filters, month) commit instantly so they
- * don't flash. Chunks are preloaded so the flushSync commit never suspends.
+ * Renders the routes and preloads every in-app page chunk on idle so
+ * navigation never waits on a chunk fetch. The slide-up entrance animation
+ * lives in AppLayout (keyed by pathname), animating the live content — no
+ * frozen-snapshot crossfade, so async content can't jump mid-transition.
  */
 function AppRoutes() {
-  const location = useLocation()
-  const [displayLocation, setDisplayLocation] = useState<Location>(location)
-
   useEffect(() => {
     const idle: (cb: () => void) => void =
       typeof window.requestIdleCallback === 'function'
@@ -104,21 +94,8 @@ function AppRoutes() {
     })
   }, [])
 
-  useEffect(() => {
-    if (location === displayLocation) return
-    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
-    const samePath = location.pathname === displayLocation.pathname
-    if (samePath || !doc.startViewTransition || reducedMotion()) {
-      setDisplayLocation(location)
-      return
-    }
-    doc.startViewTransition(() => {
-      flushSync(() => setDisplayLocation(location))
-    })
-  }, [location, displayLocation])
-
   return (
-    <Routes location={displayLocation}>
+    <Routes>
       <Route path="/setup" element={<SetupPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/oidc/callback" element={<OIDCCallbackPage />} />

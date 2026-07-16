@@ -149,6 +149,36 @@
     letter-spacing: -0.035em;
   }
 
+  /* Slide-up page entrance on each navigation (keyed by pathname in
+     AppLayout). Opacity reaches full early so the content is visible fast —
+     no empty-background flash — while it keeps sliding up to settle. Animates
+     the live content, so a skeleton→data swap underneath never jumps. No
+     fill-mode: the transform must clear after the animation, otherwise it
+     leaves a containing block that would break fixed children (e.g. the
+     transactions bulk bar). */
+  @keyframes securo-page-enter {
+    0% {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    55% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .page-enter {
+    animation: securo-page-enter 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .page-enter {
+      animation: none;
+    }
+  }
+
   /* Buttons read as clickable everywhere — browsers default <button> to the
      arrow cursor and only some call sites added cursor-pointer by hand. */
   button:not(:disabled),
@@ -184,11 +214,11 @@
   }
 }
 
-/* Navigation + theme toggle use the View Transitions API: the browser
-   snapshots the old screen and crossfades to the new one in the compositor —
-   the whole UI changes in ONE uniform fade with no per-element jank. The old
-   screen fades out quickly while the new settles in a touch slower, so a page
-   change reads as a deliberate cross-dissolve (old out, new in), not a snap. */
+/* Theme toggle uses the View Transitions API: the browser snapshots the old
+   screen and crossfades to the new one in the compositor — the whole UI
+   changes in ONE uniform fade with no per-element jank. (Navigation uses the
+   live-DOM slide-up entrance above, not this — snapshotting async page content
+   made the fade-in jump.) */
 @keyframes securo-vt-out {
   to {
     opacity: 0;

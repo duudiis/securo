@@ -458,10 +458,15 @@ export function AppLayout() {
                 content so the scope is visible right where the data is. */}
             <CollectionSelector variant="header" />
             {/* Local Suspense so a not-yet-loaded page chunk only affects the
-                content area — the sidebar/chrome never blanks. Navigation
-                crossfade is handled in App (AppRoutes). */}
+                content area — the sidebar/chrome never blanks. The keyed
+                wrapper replays the slide-up entrance on each navigation
+                (pathname change); query-param changes keep the same key and
+                don't re-animate. Animates live DOM, so async content settling
+                in never jumps. */}
             <Suspense fallback={null}>
-              <Outlet />
+              <div key={location.pathname} className="page-enter">
+                <Outlet />
+              </div>
             </Suspense>
           </div>
         </main>
