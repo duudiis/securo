@@ -32,19 +32,21 @@ import {
 } from '@/components/ui/dialog'
 import {
   Check,
-  ChevronsUpDown,
-  Download,
-  HardDriveDownload,
-  KeyRound,
+  ChevronUp,
   Languages,
   LogOut,
   Plus,
+  Repeat,
   Settings,
   Shield,
-  ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
-  Fingerprint,
+  Tag,
+  User as UserIcon,
+  Users,
 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useAvatar } from '@/hooks/use-avatar'
 import { CategoryIcon } from '@/components/category-icon'
 import type { Workspace } from '@/types'
 
@@ -72,18 +74,6 @@ function workspaceColor(w: Workspace): string {
 }
 
 interface AccountMenuProps {
-  /** Backup download in progress — disables the menu item. */
-  backingUp: boolean
-  /** Open the change-password dialog. */
-  onChangePassword: () => void
-  /** Open the 2FA setup dialog. */
-  onTwoFactor: () => void
-  /** Open the passkey management dialog. */
-  onPasskeys: () => void
-  /** Trigger a backup download. */
-  onBackup: () => void
-  /** Open the "Update available" dialog. */
-  onUpdateAvailable: () => void
   /** True when the AGENTS_ENABLED env flag is on. */
   agentsEnabled: boolean
 }
@@ -97,19 +87,12 @@ interface AccountMenuProps {
  * parent layout — they're shared with other surfaces and the menu
  * only needs to trigger them.
  */
-export function WorkspaceSwitcher({
-  backingUp,
-  onChangePassword,
-  onTwoFactor,
-  onPasskeys,
-  onBackup,
-  onUpdateAvailable,
-  agentsEnabled,
-}: AccountMenuProps) {
+export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { current, workspaces, switchWorkspace, refresh } = useWorkspace()
   const { user, logout } = useAuth()
+  const avatarUrl = useAvatar()
   const [createOpen, setCreateOpen] = useState(false)
   const [newName, setNewName] = useState('')
 
@@ -150,14 +133,16 @@ export function WorkspaceSwitcher({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm hover:bg-hover transition-colors text-left">
-            <CategoryIcon
-              icon={workspaceIcon(current)}
-              color={workspaceColor(current)}
-              size="sm"
-              className="shrink-0"
-            />
+            <Avatar className="size-8 shrink-0">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
+              <AvatarFallback className="text-xs font-semibold">
+                {(user.preferences?.display_name || user.email).charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold truncate">{current.name}</p>
+              <p className="text-xs font-semibold truncate">
+                {user.preferences?.display_name || user.email.split('@')[0]}
+              </p>
               <p className="text-[10px] text-sidebar-muted/70 truncate">
                 {user.email}
                 {roleLabel && (
@@ -165,7 +150,7 @@ export function WorkspaceSwitcher({
                 )}
               </p>
             </div>
-            <ChevronsUpDown size={13} className="text-sidebar-muted/60 shrink-0" />
+            <ChevronUp size={14} className="text-sidebar-muted/60 shrink-0" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-64" side="top">
@@ -230,36 +215,42 @@ export function WorkspaceSwitcher({
             </DropdownMenuItem>
           )}
 
-          {/* Account actions */}
+          {/* Account page: profile picture, password, 2FA, passkeys */}
           <DropdownMenuItem
-            onClick={onChangePassword}
+            onClick={() => navigate('/account')}
             className="flex items-center gap-2"
           >
-            <KeyRound size={14} />
-            {t('auth.changePassword')}
+            <UserIcon size={14} />
+            {t('nav.account')}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={onTwoFactor}
-            className="flex items-center gap-2"
-          >
-            <ShieldCheck size={14} />
-            {t('auth.twoFactorTitle')}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={onPasskeys}
-            className="flex items-center gap-2"
-          >
-            <Fingerprint size={14} />
-            {t('auth.passkeysTitle')}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={backingUp}
-            onClick={onBackup}
-            className="flex items-center gap-2"
-          >
-            <HardDriveDownload size={14} />
-            {backingUp ? t('backup.downloading') : t('backup.button')}
-          </DropdownMenuItem>
+
+          {/* Setup — the sidebar's former SETUP section, recurring last */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="flex items-center gap-2">
+              <SlidersHorizontal size={14} />
+              <span className="flex-1">{t('nav.groupSetup')}</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="w-44">
+                <DropdownMenuItem onClick={() => navigate('/categories')} className="flex items-center gap-2">
+                  <Tag size={14} />
+                  {t('nav.categories')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/payees')} className="flex items-center gap-2">
+                  <Users size={14} />
+                  {t('nav.payees')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/rules')} className="flex items-center gap-2">
+                  <SlidersHorizontal size={14} />
+                  {t('nav.rules')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/recurring')} className="flex items-center gap-2">
+                  <Repeat size={14} />
+                  {t('nav.recurring')}
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
 
           {agentsEnabled && (
             <DropdownMenuItem
@@ -270,14 +261,6 @@ export function WorkspaceSwitcher({
               {t('nav.aiAgents')}
             </DropdownMenuItem>
           )}
-
-          <DropdownMenuItem
-            onClick={onUpdateAvailable}
-            className="flex items-center gap-2"
-          >
-            <Download size={14} />
-            {t('update.menuItem')}
-          </DropdownMenuItem>
 
           {/* Language sub-menu */}
           <DropdownMenuSub>
@@ -357,7 +340,8 @@ export function WorkspaceSwitcher({
 
           <DropdownMenuItem
             onClick={logout}
-            className="flex items-center gap-2 text-rose-600 focus:text-rose-600"
+            variant="destructive"
+            className="flex items-center gap-2"
           >
             <LogOut size={14} />
             {t('auth.logout')}

@@ -29,6 +29,7 @@ const importReports = () => import('@/pages/reports')
 const importPayees = () => import('@/pages/payees')
 const importGroups = () => import('@/pages/groups')
 const importGroupDetail = () => import('@/pages/group-detail')
+const importAccount = () => import('@/pages/account')
 
 const SetupPage = lazy(() => import('@/pages/setup'))
 const LoginPage = lazy(() => import('@/pages/login'))
@@ -48,6 +49,7 @@ const ReportsPage = lazy(importReports)
 const PayeesPage = lazy(importPayees)
 const GroupsPage = lazy(importGroups)
 const GroupDetailPage = lazy(importGroupDetail)
+const AccountUserPage = lazy(importAccount)
 const AdminSettingsPage = lazy(() => import('@/pages/admin/settings'))
 const AgentsListPage = lazy(() => import('@/pages/agents-list'))
 const AgentDetailPage = lazy(() => import('@/pages/agent-detail'))
@@ -61,7 +63,7 @@ const PAGE_IMPORTS = [
   importDashboard, importTransactions, importAccounts, importAccountDetail,
   importRules, importCategories, importCollections, importBudgets,
   importRecurring, importGoals, importAssets, importReports, importPayees,
-  importGroups, importGroupDetail,
+  importGroups, importGroupDetail, importAccount,
 ]
 
 const queryClient = new QueryClient({
@@ -128,6 +130,7 @@ function AppRoutes() {
         <Route path="/payees" element={<PayeesPage />} />
         <Route path="/groups" element={<GroupsPage />} />
         <Route path="/groups/:id" element={<GroupDetailPage />} />
+        <Route path="/account" element={<AccountUserPage />} />
         <Route path="/workspace/settings" element={<WorkspaceSettingsPage />} />
         <Route path="/admin" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
         <Route path="/agents" element={<AgentsRoute><AgentsListPage /></AgentsRoute>} />

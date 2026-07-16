@@ -123,7 +123,8 @@
     "groupAdmin": "Administration",
     "groupAgents": "AI",
     "agents": "Agents",
-    "aiAgents": "AI Agents"
+    "aiAgents": "AI Agents",
+    "account": "Account"
   },
   "collections": {
     "title": "Collections",
@@ -1460,7 +1461,8 @@
       "dateFormatMdyDesc": "Month first, e.g. 06/04/2026.",
       "dateFormatYmd": "Year / Month / Day",
       "dateFormatYmdDesc": "ISO order, e.g. 2026-06-04.",
-      "updated": "Setting updated"
+      "updated": "Setting updated",
+      "maintenanceTitle": "Maintenance"
     }
   },
   "onboarding": {
@@ -1711,5 +1713,18 @@
         "subtitle": "Add a connection to point Securo at your local Ollama, OpenAI, Anthropic, or any OpenAI-compatible endpoint."
       }
     }
+  },
+  "account": {
+    "profileSection": "Profile",
+    "securitySection": "Security",
+    "uploadPicture": "Upload picture",
+    "pictureHint": "PNG, JPG, WebP or GIF, up to 2MB",
+    "pictureUpdated": "Profile picture updated",
+    "pictureRemoved": "Profile picture removed",
+    "pictureInvalid": "Unsupported image type",
+    "pictureTooLarge": "Image too large (max 2MB)",
+    "profileSaved": "Profile saved",
+    "email": "Email",
+    "enabled": "Enabled"
   }
 }

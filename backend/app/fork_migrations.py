@@ -51,6 +51,14 @@ MIGRATIONS: list[tuple[int, list[str]]] = [
             "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS type_reset_pending BOOLEAN NOT NULL DEFAULT FALSE",
         ],
     ),
+    (
+        3,
+        [
+            # Profile pictures, stored inline (small — ≤2MB enforced at the API).
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar BYTEA",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_content_type VARCHAR(100)",
+        ],
+    ),
 ]
 
 

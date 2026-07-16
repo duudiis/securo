@@ -4,9 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/auth-context'
 import { CollectionSelector } from '@/components/collection-selector'
-import { auth as authApi, backup as backupApi, admin as adminApi } from '@/lib/api'
+import { auth as authApi, admin as adminApi } from '@/lib/api'
 import { resolveSupportedLang } from '@/lib/i18n'
-import { toast } from 'sonner'
 import { OnboardingTour } from '@/components/onboarding-tour'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
@@ -24,7 +23,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { APP_VERSION } from '@/lib/build-info'
 import { ShellLogo } from '@/components/shell-logo'
 import { UpdateAvailableBanner } from '@/components/update-available-banner'
 import { UpdateAvailableDialog } from '@/components/update-available-dialog'
@@ -32,32 +30,20 @@ import { WorkspaceSwitcher } from '@/components/workspace-switcher'
 import {
   ArrowLeftRight,
   Building2,
-  SlidersHorizontal,
   Menu,
-  Tag,
-  PiggyBank,
-  Target,
   Eye,
   EyeOff,
-  Repeat,
   Landmark,
-  Users,
-  Split,
   BarChart3,
   Sun,
   Moon,
   Languages,
-  KeyRound,
   Check,
-  HardDriveDownload,
   Shield,
-  ShieldCheck,
-  Fingerprint,
+  UserRound,
+  LogOut,
 } from 'lucide-react'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
-import { ChangePasswordDialog } from '@/components/change-password-dialog'
-import { TwoFactorSetup } from '@/components/two-factor-setup'
-import { PasskeyManagementDialog } from '@/components/passkey-management-dialog'
 import { CommandPalette } from '@/components/command-palette'
 import { PageTransition } from '@/components/page-transition'
 import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
@@ -81,14 +67,6 @@ const navItems: NavItem[] = [
   { type: 'separator', labelKey: 'nav.groupAnalysis' },
   { type: 'link', key: 'reports', path: '/reports', icon: BarChart3 },
   { type: 'link', key: 'assets', path: '/assets', icon: Landmark },
-  { type: 'separator', labelKey: 'nav.groupSetup' },
-  { type: 'link', key: 'budgets', path: '/budgets', icon: PiggyBank },
-  { type: 'link', key: 'goals', path: '/goals', icon: Target },
-  { type: 'link', key: 'recurring', path: '/recurring', icon: Repeat },
-  { type: 'link', key: 'categories', path: '/categories', icon: Tag },
-  { type: 'link', key: 'payees', path: '/payees', icon: Users },
-  { type: 'link', key: 'splitGroups', path: '/groups', icon: Split },
-  { type: 'link', key: 'rules', path: '/rules', icon: SlidersHorizontal },
 ]
 
 export function AppLayout() {
@@ -98,10 +76,6 @@ export function AppLayout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { privacyMode, togglePrivacyMode } = usePrivacyMode()
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
-  const [twoFactorOpen, setTwoFactorOpen] = useState(false)
-  const [passkeysOpen, setPasskeysOpen] = useState(false)
-  const [backingUp, setBackingUp] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
@@ -182,7 +156,6 @@ export function AppLayout() {
     }
   }
 
-  const versionA11yLabel = t('app.versionAriaLabel', { version: APP_VERSION })
 
   return (
     <div className="min-h-screen bg-background">
@@ -248,22 +221,7 @@ export function AppLayout() {
           <UserMenu
             userInitial={userInitial}
             logout={logout}
-            onChangePassword={() => setChangePasswordOpen(true)}
-            onTwoFactor={() => setTwoFactorOpen(true)}
-            onPasskeys={() => setPasskeysOpen(true)}
             agentsEnabled={agentsEnabled}
-            backingUp={backingUp}
-            onBackup={async () => {
-              setBackingUp(true)
-              try {
-                await backupApi.download()
-                toast.success(t('backup.success'))
-              } catch {
-                toast.error(t('backup.error'))
-              } finally {
-                setBackingUp(false)
-              }
-            }}
             dark
             isAdmin={user?.is_superuser}
           />
@@ -418,38 +376,9 @@ export function AppLayout() {
               line, and combines workspace switching with all the
               account actions that used to live in a separate dropdown. */}
           <div className="px-3 pt-1">
-            <WorkspaceSwitcher
-              backingUp={backingUp}
-              onChangePassword={() => setChangePasswordOpen(true)}
-              onTwoFactor={() => setTwoFactorOpen(true)}
-              onPasskeys={() => setPasskeysOpen(true)}
-              onBackup={async () => {
-                setBackingUp(true)
-                try {
-                  await backupApi.download()
-                  toast.success(t('backup.success'))
-                } catch {
-                  toast.error(t('backup.error'))
-                } finally {
-                  setBackingUp(false)
-                }
-              }}
-              onUpdateAvailable={() => setUpdateDialogOpen(true)}
-              agentsEnabled={agentsEnabled}
-            />
+            <WorkspaceSwitcher agentsEnabled={agentsEnabled} />
           </div>
 
-          <div className="px-3 pb-3 pt-1">
-            <div
-              className="text-[11px] leading-4 text-sidebar-muted/70 text-center"
-              role="note"
-            >
-              <span className="sr-only">{versionA11yLabel}</span>
-              <span aria-hidden="true" className="block break-all line-clamp-2">
-                {t('app.versionLabel', { version: APP_VERSION })}
-              </span>
-            </div>
-          </div>
         </aside>
 
         {/* Main content */}
@@ -458,10 +387,7 @@ export function AppLayout() {
             and reserving a phantom scrollbar gutter on tall pages. clip just
             clips horizontal overflow without that side effect. */}
         <main className="flex-1 min-h-screen overflow-x-clip lg:ml-60">
-          {/* Top gap scales gently with width but stays close to the 24px side
-              padding (px-6) so it reads even — capped low because vw includes
-              the sidebar and would otherwise overshoot on wide screens. */}
-          <div className="px-6 pb-6 pt-[clamp(1.5rem,2.2vw,2rem)] max-w-7xl mx-auto">
+          <div className="p-6 max-w-7xl mx-auto">
             {/* Active-collection filter (issue #105): sticky bar above the
                 content so the scope is visible right where the data is. */}
             <CollectionSelector variant="header" />
@@ -476,18 +402,6 @@ export function AppLayout() {
       </div>
 
       {showTour && <OnboardingTour onComplete={handleTourComplete} />}
-      <ChangePasswordDialog
-        open={changePasswordOpen}
-        onClose={() => setChangePasswordOpen(false)}
-      />
-      <TwoFactorSetup
-        open={twoFactorOpen}
-        onClose={() => setTwoFactorOpen(false)}
-      />
-      <PasskeyManagementDialog
-        open={passkeysOpen}
-        onClose={() => setPasskeysOpen(false)}
-      />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       {/* Slide-over global chat — opened from the sidebar pill or via
           ⌘J. The previous floating bottom-right button was removed
@@ -504,22 +418,12 @@ export function AppLayout() {
 function UserMenu({
   userInitial,
   logout,
-  onChangePassword,
-  onTwoFactor,
-  onPasskeys,
-  onBackup,
-  backingUp,
   dark,
   isAdmin,
   agentsEnabled,
 }: {
   userInitial: string
   logout: () => void
-  onChangePassword: () => void
-  onTwoFactor: () => void
-  onPasskeys: () => void
-  onBackup: () => void
-  backingUp: boolean
   dark?: boolean
   isAdmin?: boolean
   agentsEnabled?: boolean
@@ -558,33 +462,11 @@ function UserMenu({
           </>
         )}
         <DropdownMenuItem
-          onClick={onChangePassword}
+          onClick={() => nav('/account')}
           className="flex items-center gap-2"
         >
-          <KeyRound size={14} />
-          {t('auth.changePassword')}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={onTwoFactor}
-          className="flex items-center gap-2"
-        >
-          <ShieldCheck size={14} />
-          {t('auth.twoFactorTitle')}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={onPasskeys}
-          className="flex items-center gap-2"
-        >
-          <Fingerprint size={14} />
-          {t('auth.passkeysTitle')}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled={backingUp}
-          onClick={onBackup}
-          className="flex items-center gap-2"
-        >
-          <HardDriveDownload size={14} />
-          {backingUp ? t('backup.downloading') : t('backup.button')}
+          <UserRound size={14} />
+          {t('nav.account')}
         </DropdownMenuItem>
         {agentsEnabled && (
           <DropdownMenuItem
@@ -684,10 +566,8 @@ function UserMenu({
           </DropdownMenuPortal>
         </DropdownMenuSub>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={logout}
-          className="text-rose-600 focus:text-rose-600"
-        >
+        <DropdownMenuItem onClick={logout} variant="destructive" className="flex items-center gap-2">
+          <LogOut size={14} />
           {t('auth.logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>

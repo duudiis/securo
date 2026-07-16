@@ -1133,6 +1133,22 @@ export interface PageSettingPayload {
   settings: Record<string, unknown>
 }
 
+// Profile picture (fork addition) — bytes served through the authed API.
+export const avatar = {
+  get: async (): Promise<Blob> => {
+    const { data } = await api.get('/users/me/avatar', { responseType: 'blob' })
+    return data
+  },
+  upload: async (file: File): Promise<void> => {
+    const form = new FormData()
+    form.append('file', file)
+    await api.put('/users/me/avatar', form)
+  },
+  remove: async (): Promise<void> => {
+    await api.delete('/users/me/avatar')
+  },
+}
+
 export const pageSettings = {
   get: async (pageKey: string): Promise<PageSettingPayload> => {
     const { data } = await api.get(`/page-settings/${pageKey}`)

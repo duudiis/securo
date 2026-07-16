@@ -123,7 +123,8 @@
     "groupAdmin": "Administração",
     "groupAgents": "IA",
     "agents": "Agentes",
-    "aiAgents": "Agentes IA"
+    "aiAgents": "Agentes IA",
+    "account": "Conta"
   },
   "collections": {
     "title": "Coleções",
@@ -1460,7 +1461,8 @@
       "dateFormatMdyDesc": "Mês primeiro, ex.: 06/04/2026.",
       "dateFormatYmd": "Ano / Mês / Dia",
       "dateFormatYmdDesc": "Ordem ISO, ex.: 2026-06-04.",
-      "updated": "Configuração atualizada"
+      "updated": "Configuração atualizada",
+      "maintenanceTitle": "Manutenção"
     }
   },
   "onboarding": {
@@ -1711,5 +1713,18 @@
         "openai": "OpenAI Responses API"
       }
     }
+  },
+  "account": {
+    "profileSection": "Perfil",
+    "securitySection": "Segurança",
+    "uploadPicture": "Enviar foto",
+    "pictureHint": "PNG, JPG, WebP ou GIF, até 2MB",
+    "pictureUpdated": "Foto de perfil atualizada",
+    "pictureRemoved": "Foto de perfil removida",
+    "pictureInvalid": "Tipo de imagem não suportado",
+    "pictureTooLarge": "Imagem muito grande (máx. 2MB)",
+    "profileSaved": "Perfil salvo",
+    "email": "E-mail",
+    "enabled": "Ativado"
   }
 }

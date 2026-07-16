@@ -5,6 +5,8 @@ export interface User {
   is_superuser: boolean
   is_verified: boolean
   is_2fa_enabled: boolean
+  /** Fork addition: profile picture stored server-side. */
+  has_avatar?: boolean
   preferences: UserPreferences
 }
 

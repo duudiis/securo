@@ -123,7 +123,8 @@
     "groupAdmin": "Администрирование",
     "groupAgents": "ИИ",
     "agents": "Агенты",
-    "aiAgents": "ИИ-агенты"
+    "aiAgents": "ИИ-агенты",
+    "account": "Аккаунт"
   },
   "collections": {
     "title": "Коллекции",
@@ -1460,7 +1461,8 @@
       "dateFormatMdyDesc": "Сначала месяц, например 06.04.2026.",
       "dateFormatYmd": "Год / Месяц / День",
       "dateFormatYmdDesc": "ISO-порядок, например 2026-06-04.",
-      "updated": "Настройка обновлена"
+      "updated": "Настройка обновлена",
+      "maintenanceTitle": "Обслуживание"
     }
   },
   "onboarding": {
@@ -1711,5 +1713,18 @@
         "subtitle": "Добавьте подключение, чтобы направить Securo на ваш локальный Ollama, OpenAI, Anthropic или любой совместимый с OpenAI эндпоинт."
       }
     }
+  },
+  "account": {
+    "profileSection": "Профиль",
+    "securitySection": "Безопасность",
+    "uploadPicture": "Загрузить фото",
+    "pictureHint": "PNG, JPG, WebP или GIF, до 2МБ",
+    "pictureUpdated": "Фото профиля обновлено",
+    "pictureRemoved": "Фото профиля удалено",
+    "pictureInvalid": "Неподдерживаемый тип изображения",
+    "pictureTooLarge": "Изображение слишком большое (макс. 2МБ)",
+    "profileSaved": "Профиль сохранён",
+    "email": "Эл. почта",
+    "enabled": "Включено"
   }
 }

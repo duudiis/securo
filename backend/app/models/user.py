@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
-from sqlalchemy import JSON, Boolean, String, UniqueConstraint
+from sqlalchemy import JSON, Boolean, LargeBinary, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -29,6 +29,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         },
     )
 
+    # Fork addition (columns created by app.fork_migrations): profile picture,
+    # stored inline — avatars are small (≤2MB enforced at the API).
+    avatar: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True, default=None)
+    avatar_content_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, default=None)
+
     totp_secret: Mapped[Optional[str]] = mapped_column(String(32), nullable=True, default=None)
     is_2fa_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     oidc_issuer: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
@@ -44,3 +49,8 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         """Return the user's configured primary currency."""
         from app.core.config import get_settings
         return (self.preferences or {}).get("currency_display", get_settings().default_currency)
+
+    @property
+    def has_avatar(self) -> bool:
+        """Whether a profile picture is stored (exposed on UserRead)."""
+        return self.avatar is not None

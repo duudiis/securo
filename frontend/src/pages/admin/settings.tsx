@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { admin as adminApi, currencies as currenciesApi } from '@/lib/api'
+import { admin as adminApi, currencies as currenciesApi, backup as backupApi } from '@/lib/api'
 import { resolveDisplayLocale, resolveDateLocale, type NumberFormat, type DateFormat } from '@/lib/format'
 import { resolveSupportedLang } from '@/lib/i18n'
 import { useAuth } from '@/contexts/auth-context'
@@ -30,7 +30,8 @@ import {
 } from '@/components/ui/select'
 import { PageHeader } from '@/components/page-header'
 import { setThemeBasedOnSystem } from '@/lib/theme-utils'
-import { Search, Plus, Trash2, Shield, ShieldOff, UserCog, Users, Scale, Tag, Palette, Save, Hash, CalendarDays } from 'lucide-react'
+import { Search, Plus, Trash2, Shield, ShieldOff, UserCog, Users, Scale, Tag, Palette, Save, Hash, CalendarDays, HardDriveDownload, Download, Wrench } from 'lucide-react'
+import { UpdateAvailableDialog } from '@/components/update-available-dialog'
 import type { AdminUser } from '@/types'
 
 export default function AdminSettingsPage() {
@@ -40,6 +41,8 @@ export default function AdminSettingsPage() {
   const { resolvedTheme } = useTheme()
 
   const [search, setSearch] = useState('')
+  const [backingUp, setBackingUp] = useState(false)
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [editUser, setEditUser] = useState<AdminUser | null>(null)
   const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null)
@@ -617,6 +620,43 @@ export default function AdminSettingsPage() {
           </div>
         )}
       </div>
+
+      {/* Maintenance: backup + updates (moved here from the account menu) */}
+      <div className="rounded-xl border border-border/60 bg-card overflow-hidden mt-5">
+        <div className="px-5 py-4 border-b border-border/40">
+          <div className="flex items-center gap-2 mb-0.5">
+            <Wrench size={15} className="text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">{t('admin.settings.maintenanceTitle')}</h3>
+          </div>
+        </div>
+        <div className="px-5 py-4 flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={backingUp}
+            onClick={async () => {
+              setBackingUp(true)
+              try {
+                await backupApi.download()
+                toast.success(t('backup.success'))
+              } catch {
+                toast.error(t('backup.error'))
+              } finally {
+                setBackingUp(false)
+              }
+            }}
+          >
+            <HardDriveDownload size={15} />
+            {backingUp ? t('backup.downloading') : t('backup.button')}
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => setUpdateDialogOpen(true)}>
+            <Download size={15} />
+            {t('update.menuItem')}
+          </Button>
+        </div>
+      </div>
+
+      <UpdateAvailableDialog open={updateDialogOpen} onClose={() => setUpdateDialogOpen(false)} />
 
       {/* Create User Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

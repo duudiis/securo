@@ -16,6 +16,8 @@ class UserPreferences(BaseModel):
 class UserRead(schemas.BaseUser[uuid.UUID]):
     preferences: Optional[dict] = None
     is_2fa_enabled: bool = False
+    # Fork addition: profile picture presence (bytes served by /users/me/avatar).
+    has_avatar: bool = False
 
 
 class UserCreate(schemas.BaseUserCreate):
