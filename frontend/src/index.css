@@ -266,6 +266,18 @@
   }
 }
 
+/* Radix scroll-lock (react-remove-scroll) adds `margin-right: <scrollbar>px`
+   to body[data-scroll-locked] to compensate for a scrollbar it removes when a
+   dialog/dropdown opens. We keep the scrollbar permanently present
+   (html { overflow-y: scroll }), so nothing is removed and that margin just
+   shifts the page left. Neutralize it — higher specificity than the library's
+   rule, and unlayered so it isn't out-prioritized by its injected !important
+   style. Paired with overflow-y: scroll: if that's ever removed, restore the
+   library's compensation by deleting this. */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+}
+
 /* Theme toggle uses the View Transitions API: the browser snapshots the old
    screen and crossfades to the new one in the compositor — the whole UI
    changes in ONE uniform fade with no per-element jank. (Navigation uses the
