@@ -30,6 +30,7 @@ import { ICON_MAP } from '@/lib/category-icons'
 import { IconPicker } from '@/components/icon-picker'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { SkeletonListCard } from '@/components/skeletons'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -259,7 +260,7 @@ export default function GoalsPage() {
         ))}
       </div>
 
-      <SkeletonSurface loading={isLoading}>
+      <SkeletonSurface skeleton={<SkeletonListCard rows={6} header />} loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('goals.title')}

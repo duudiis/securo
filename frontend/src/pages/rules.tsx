@@ -17,6 +17,7 @@ import { Trash2, Plus, RefreshCw, Package, Check, ArrowUpDown, ArrowUp, ArrowDow
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { SkeletonListCard } from '@/components/skeletons'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { RuleDialog } from '@/components/rule-dialog'
 
@@ -296,7 +297,7 @@ export default function RulesPage() {
     <div>
       <PageHeader section={t('rules.section')} title={t('nav.rules')} />
 
-      <SkeletonSurface loading={isLoading}>
+      <SkeletonSurface skeleton={<SkeletonListCard rows={6} header />} loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('rules.sectionTitle')}

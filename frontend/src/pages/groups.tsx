@@ -18,6 +18,7 @@ import {
 import { GroupForm } from '@/components/group-form'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { SkeletonListCard } from '@/components/skeletons'
 import { Archive, ChevronRight, Trash2, Users } from 'lucide-react'
 import type { Group, GroupKind } from '@/types'
 
@@ -153,7 +154,7 @@ export default function GroupsPage() {
         ))}
       </div>
 
-      <SkeletonSurface loading={isLoading}>
+      <SkeletonSurface skeleton={<SkeletonListCard rows={6} header />} loading={isLoading}>
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-4">
         {visibleGroups.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">

@@ -21,6 +21,7 @@ import { Pencil, Trash2, Plus, RefreshCw, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
 import { SkeletonSurface } from '@/components/skeleton-surface'
+import { SkeletonListCard } from '@/components/skeletons'
 import { CategorySelect } from '@/components/category-select'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
@@ -143,7 +144,7 @@ function RecurringTab() {
 
   return (
     <>
-      <SkeletonSurface loading={isLoading}>
+      <SkeletonSurface skeleton={<SkeletonListCard rows={6} header />} loading={isLoading}>
       <SectionCard>
         <SectionHeader
           title={t('recurring.title')}
