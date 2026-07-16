@@ -149,19 +149,25 @@
     letter-spacing: -0.035em;
   }
 
-  /* Slide-up page entrance on each navigation (keyed by pathname in
-     AppLayout). Opacity reaches full early so the content is visible fast —
-     no empty-background flash — while it keeps sliding up to settle. Animates
-     the live content, so a skeleton→data swap underneath never jumps. No
-     fill-mode: the transform must clear after the animation, otherwise it
-     leaves a containing block that would break fixed children (e.g. the
-     transactions bulk bar). */
+  /* Page transitions (see components/page-transition): the outgoing page
+     fades out quickly, then the incoming one slides up and fades in. Both
+     animate the live content, so a skeleton→data swap underneath never jumps.
+     .page-enter uses no fill-mode: the transform must clear after the
+     animation, otherwise it leaves a containing block that would break fixed
+     children (e.g. the transactions bulk bar). Opacity reaches full early so
+     the content is visible fast — no empty-background flash — while it keeps
+     sliding up to settle. */
+  @keyframes securo-page-leave {
+    to {
+      opacity: 0;
+    }
+  }
   @keyframes securo-page-enter {
     0% {
       opacity: 0;
-      transform: translateY(16px);
+      transform: translateY(18px);
     }
-    55% {
+    40% {
       opacity: 1;
     }
     100% {
@@ -169,13 +175,17 @@
       transform: translateY(0);
     }
   }
+  .page-leave {
+    animation: securo-page-leave 110ms ease-in forwards;
+  }
   .page-enter {
-    animation: securo-page-enter 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    animation: securo-page-enter 380ms cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform, opacity;
   }
   @media (prefers-reduced-motion: reduce) {
+    .page-leave,
     .page-enter {
-      animation: none;
+      animation-duration: 1ms;
     }
   }
 

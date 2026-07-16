@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, Suspense } from 'react'
 import { flushSync } from 'react-dom'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/auth-context'
 import { CollectionSelector } from '@/components/collection-selector'
@@ -59,6 +59,7 @@ import { ChangePasswordDialog } from '@/components/change-password-dialog'
 import { TwoFactorSetup } from '@/components/two-factor-setup'
 import { PasskeyManagementDialog } from '@/components/passkey-management-dialog'
 import { CommandPalette } from '@/components/command-palette'
+import { PageTransition } from '@/components/page-transition'
 import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
 import { GlobalChatPanel } from '@/components/global-chat-panel'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
@@ -458,15 +459,10 @@ export function AppLayout() {
                 content so the scope is visible right where the data is. */}
             <CollectionSelector variant="header" />
             {/* Local Suspense so a not-yet-loaded page chunk only affects the
-                content area — the sidebar/chrome never blanks. The keyed
-                wrapper replays the slide-up entrance on each navigation
-                (pathname change); query-param changes keep the same key and
-                don't re-animate. Animates live DOM, so async content settling
-                in never jumps. */}
+                content area — the sidebar/chrome never blanks. PageTransition
+                fades the old page out then slides the new one up. */}
             <Suspense fallback={null}>
-              <div key={location.pathname} className="page-enter">
-                <Outlet />
-              </div>
+              <PageTransition />
             </Suspense>
           </div>
         </main>

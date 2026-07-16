@@ -107,7 +107,9 @@ export function CashflowSankey({ composition, currency, locale, groupIndex, expa
     const el = containerRef.current
     if (!el) return
     const observer = new ResizeObserver((entries) => {
-      setWidth(entries[0].contentRect.width)
+      // Floor to avoid a sub-pixel width making the SVG 1px wider than its
+      // container, which pushed a sliver of horizontal overflow on the page.
+      setWidth(Math.floor(entries[0].contentRect.width))
     })
     observer.observe(el)
     return () => observer.disconnect()
@@ -360,11 +362,12 @@ export function CashflowSankey({ composition, currency, locale, groupIndex, expa
   const nodeDimmed = (idx: number) => hover !== null && !activeNodes.has(idx)
 
   return (
-    <div ref={containerRef} className="w-full privacy-sensitive">
+    <div ref={containerRef} className="w-full privacy-sensitive overflow-x-hidden">
       {layout && (
         <svg
           width={width}
           height={height}
+          className="block"
           role="img"
           aria-label={t('reports.flowChartAria')}
           onMouseLeave={() => setHover(null)}
