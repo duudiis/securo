@@ -133,10 +133,14 @@
     @apply border-border outline-ring/50;
   }
   html {
-    /* Always reserve the scrollbar gutter so centered page content doesn't
-       shift sideways when navigating between a short page (no scrollbar) and
-       a tall one (scrollbar present). */
-    scrollbar-gutter: stable;
+    /* Always show the vertical scrollbar so centered content doesn't shift
+       when navigating between a short page (no scrollbar) and a tall one.
+       Preferred over scrollbar-gutter: stable because Radix's scroll-lock
+       (react-remove-scroll) measures the reserved gutter as scrollbar width
+       and adds its own padding on top — double-compensating and shifting the
+       page when a dialog/dropdown opens. With a real always-present scrollbar
+       that compensation is correct, so nothing moves. */
+    overflow-y: scroll;
   }
   body {
     @apply bg-background text-foreground;

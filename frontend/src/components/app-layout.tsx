@@ -458,7 +458,7 @@ export function AppLayout() {
             and reserving a phantom scrollbar gutter on tall pages. clip just
             clips horizontal overflow without that side effect. */}
         <main className="flex-1 min-h-screen overflow-x-clip lg:ml-60">
-          <div className="p-6 max-w-7xl mx-auto">
+          <div className="px-6 pb-6 pt-10 max-w-7xl mx-auto">
             {/* Active-collection filter (issue #105): sticky bar above the
                 content so the scope is visible right where the data is. */}
             <CollectionSelector variant="header" />
