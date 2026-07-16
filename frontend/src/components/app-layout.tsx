@@ -457,7 +457,12 @@ export function AppLayout() {
             {/* Active-collection filter (issue #105): sticky bar above the
                 content so the scope is visible right where the data is. */}
             <CollectionSelector variant="header" />
-            <Outlet />
+            {/* Keyed by pathname so each navigation replays the entrance
+                animation. Query-param-only changes (filters, month) keep the
+                same key and don't re-animate. */}
+            <div key={location.pathname} className="page-enter">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>
