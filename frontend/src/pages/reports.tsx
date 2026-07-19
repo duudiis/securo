@@ -171,6 +171,11 @@ export default function ReportsPage() {
 
   const currentTab = REPORT_TABS.find((tab) => tab.key === activeTab) ?? REPORT_TABS[0]
 
+  // Tab-specific document title (Net Worth, Cash Flow, Money Map, ...).
+  useLayoutEffect(() => {
+    document.title = `${t(currentTab.labelKey)} · Securo`
+  }, [currentTab.labelKey, t])
+
   const isCashFlow = activeTab === 'cash_flow'
   // The Money Map (Sankey) tab is driven by the same income/expenses
   // composition, aggregated over the selected historical range.

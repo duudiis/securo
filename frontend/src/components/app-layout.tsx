@@ -51,6 +51,7 @@ import { GlobalChatPanel } from '@/components/global-chat-panel'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
 import { Bot, Search, Sparkles } from 'lucide-react'
 import { setThemeBasedOnSystem } from '@/lib/theme-utils'
+import { syncFaviconToTheme } from '@/lib/favicon'
 
 type NavItem =
   | { type: 'link'; key: string; path: string; icon: React.ElementType }
@@ -74,6 +75,33 @@ export function AppLayout() {
   const { user, logout, updateUser } = useAuth()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const location = useLocation()
+
+  // Document title follows the active section. Reports owns its own title
+  // (per tab: Net Worth, Cash Flow, ...) — child effects run first, so the
+  // layout must not overwrite it.
+  useEffect(() => {
+    const path = location.pathname
+    const titleKey =
+      path === '/' ? 'nav.dashboard'
+      : path.startsWith('/transactions') ? 'nav.transactions'
+      : path.startsWith('/accounts') ? 'nav.accounts'
+      : path === '/account' ? 'nav.account'
+      : path.startsWith('/assets') ? 'nav.assets'
+      : path.startsWith('/budgets') ? 'nav.budgets'
+      : path.startsWith('/goals') ? 'nav.goals'
+      : path.startsWith('/recurring') ? 'nav.recurring'
+      : path.startsWith('/categories') ? 'nav.categories'
+      : path.startsWith('/payees') ? 'nav.payees'
+      : path.startsWith('/groups') ? 'nav.splitGroups'
+      : path.startsWith('/rules') ? 'nav.rules'
+      : path.startsWith('/collections') ? 'collections.title'
+      : path.startsWith('/workspace') ? 'workspace.settingsMenu'
+      : path.startsWith('/admin') ? 'nav.groupAdmin'
+      : path.startsWith('/agents') ? 'nav.aiAgents'
+      : null
+    if (path.startsWith('/reports')) return
+    document.title = titleKey ? `${t(titleKey)} · Securo` : 'Securo'
+  }, [location.pathname, t])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { privacyMode, togglePrivacyMode } = usePrivacyMode()
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -89,7 +117,8 @@ export function AppLayout() {
   useEffect(() => {
     adminApi.defaultColors().then(({ light, dark }) => {
       setThemeBasedOnSystem(light, dark, resolvedTheme)
-    }).catch(() => {})
+      syncFaviconToTheme()
+    }).catch(() => syncFaviconToTheme())
     
     if (!agentsEnabled) return
     const handler = (e: KeyboardEvent) => {
@@ -146,6 +175,7 @@ export function AppLayout() {
       doc.startViewTransition(() => {
         flushSync(() => setTheme(next))
       })
+      window.setTimeout(syncFaviconToTheme, 50)
     } else {
       // Fallback (see .theme-transition in index.css): force one shared
       // transition timing on every element for the toggle duration.
@@ -153,6 +183,7 @@ export function AppLayout() {
       root.classList.add('theme-transition')
       setTheme(next)
       window.setTimeout(() => root.classList.remove('theme-transition'), 350)
+      window.setTimeout(syncFaviconToTheme, 50)
     }
   }
 

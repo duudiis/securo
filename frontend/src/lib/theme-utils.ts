@@ -11,11 +11,19 @@ export function setThemeBasedOnSystem(lightColor: string | null, darkColor: stri
     root.style.setProperty('--ring', themeColor)
     root.style.setProperty('--sidebar-primary', themeColor)
 
-    const mixBase = isDark ? 'black' : 'white'
     const contrastBase = isDark ? 'white' : 'black'
 
-    const accentBg = `color-mix(in srgb, ${themeColor}, ${mixBase} 90%)`
-    const mutedBg = `color-mix(in srgb, ${themeColor}, ${mixBase} 94%)`
+    // Dark mode mixes toward a dark GRAY base, not pure black: black-based
+    // mixes landed below the card/popover surface lightness, making the
+    // accent highlight (menu selection, hovers, "today" chip) nearly
+    // invisible. The gray bases sit at the neutral theme's accent/muted
+    // lightness, so the tinted result is always a visible step lighter.
+    const accentBg = isDark
+      ? `color-mix(in srgb, ${themeColor} 24%, #2E2E32)`
+      : `color-mix(in srgb, ${themeColor}, white 90%)`
+    const mutedBg = isDark
+      ? `color-mix(in srgb, ${themeColor} 10%, #2A2A2A)`
+      : `color-mix(in srgb, ${themeColor}, white 94%)`
     root.style.setProperty('--accent', accentBg)
     root.style.setProperty('--sidebar-accent', accentBg)
     root.style.setProperty('--muted', mutedBg)
