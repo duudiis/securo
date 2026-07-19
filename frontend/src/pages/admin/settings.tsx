@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { admin as adminApi, currencies as currenciesApi, backup as backupApi } from '@/lib/api'
+import { admin as adminApi, currencies as currenciesApi, backup as backupApi, workspaces as workspacesApi } from '@/lib/api'
 import { resolveDisplayLocale, resolveDateLocale, type NumberFormat, type DateFormat } from '@/lib/format'
 import { resolveSupportedLang } from '@/lib/i18n'
 import { useAuth } from '@/contexts/auth-context'
+import { useWorkspace } from '@/contexts/workspace-context'
+import { useNavigate } from 'react-router-dom'
+import { CategoryIcon } from '@/components/category-icon'
+import { IconPicker } from '@/components/icon-picker'
+import type { Workspace } from '@/types'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -277,6 +282,75 @@ export default function AdminSettingsPage() {
   const isSelf = (u: AdminUser) => u.id === currentUser?.id
   const isEnabled = regSetting?.value === 'true'
 
+  // ── Tabs (reports-style sliding underline + directional slide) ──
+  const ADMIN_TABS = [
+    { key: 'users', labelKey: 'admin.tabs.users' },
+    { key: 'workspaces', labelKey: 'admin.tabs.workspaces' },
+    { key: 'settings', labelKey: 'admin.tabs.settings' },
+    { key: 'maintenance', labelKey: 'admin.settings.maintenanceTitle' },
+  ] as const
+  const [activeTab, setActiveTab] = useState<(typeof ADMIN_TABS)[number]['key']>('users')
+  const tabBarRef = useRef<HTMLDivElement>(null)
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 })
+  const [slideDir, setSlideDir] = useState<'left' | 'right'>('right')
+  useLayoutEffect(() => {
+    const el = tabBarRef.current?.querySelector<HTMLElement>(`[data-tab="${activeTab}"]`)
+    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
+  }, [activeTab])
+  const handleSelectTab = (key: (typeof ADMIN_TABS)[number]['key']) => {
+    if (key === activeTab) return
+    const order = ADMIN_TABS.map((tab) => tab.key as string)
+    setSlideDir(order.indexOf(key) > order.indexOf(activeTab) ? 'right' : 'left')
+    setActiveTab(key)
+  }
+  const slideClass = slideDir === 'right' ? 'tab-enter-right' : 'tab-enter-left'
+
+  // ── Workspaces tab ──
+  const navigate = useNavigate()
+  const { workspaces: workspacesList, refresh: refreshWorkspaces, switchWorkspace } = useWorkspace()
+  const [editWs, setEditWs] = useState<Workspace | null>(null)
+  const [wsName, setWsName] = useState('')
+  const [wsIcon, setWsIcon] = useState('briefcase')
+  const [wsColor, setWsColor] = useState('#6366F1')
+  const [wsCurrency, setWsCurrency] = useState('USD')
+  const [wsCreateOpen, setWsCreateOpen] = useState(false)
+  const [wsNewName, setWsNewName] = useState('')
+
+  const openEditWs = (w: Workspace) => {
+    setEditWs(w)
+    setWsName(w.name)
+    setWsIcon(w.icon || 'briefcase')
+    setWsColor(w.color || '#6366F1')
+    setWsCurrency(w.default_currency || 'USD')
+  }
+
+  const saveWsMutation = useMutation({
+    mutationFn: () =>
+      workspacesApi.update(editWs!.id, {
+        name: wsName.trim(),
+        icon: wsIcon,
+        color: wsColor,
+        default_currency: wsCurrency,
+      }),
+    onSuccess: async () => {
+      await refreshWorkspaces()
+      setEditWs(null)
+      toast.success(t('common.save'))
+    },
+    onError: () => toast.error(t('common.error')),
+  })
+
+  const createWsMutation = useMutation({
+    mutationFn: () => workspacesApi.create({ name: wsNewName.trim(), self_membership: true }),
+    onSuccess: async () => {
+      await refreshWorkspaces()
+      setWsCreateOpen(false)
+      setWsNewName('')
+      toast.success(t('workspace.createSuccess', 'Workspace created'))
+    },
+    onError: () => toast.error(t('common.error')),
+  })
+
   const filteredUsers = users
 
   return (
@@ -285,13 +359,42 @@ export default function AdminSettingsPage() {
         section={t('nav.groupAdmin')}
         title={t('admin.settings.title')}
         action={
-          <Button onClick={() => { resetCreateForm(); setCreateOpen(true) }}>
-            <Plus size={16} className="mr-1.5" />
-            {t('admin.users.add')}
-          </Button>
+          activeTab === 'users' ? (
+            <Button onClick={() => { resetCreateForm(); setCreateOpen(true) }}>
+              <Plus size={16} className="mr-1.5" />
+              {t('admin.users.add')}
+            </Button>
+          ) : activeTab === 'workspaces' ? (
+            <Button onClick={() => setWsCreateOpen(true)}>
+              <Plus size={16} className="mr-1.5" />
+              {t('workspace.create', 'New workspace')}
+            </Button>
+          ) : undefined
         }
       />
 
+      {/* Tab Bar — shared sliding underline, like Reports */}
+      <div ref={tabBarRef} className="relative flex items-center gap-1 mb-5 border-b border-border">
+        {ADMIN_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            data-tab={tab.key}
+            onClick={() => handleSelectTab(tab.key)}
+            className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
+              activeTab === tab.key ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t(tab.labelKey)}
+          </button>
+        ))}
+        <span
+          className="absolute bottom-0 h-0.5 bg-primary rounded-full transition-[left,width] duration-300 ease-out"
+          style={{ left: indicator.left, width: indicator.width }}
+        />
+      </div>
+
+      {activeTab === 'users' && (
+      <div key="users" className={slideClass}>
       {/* Search */}
       <div className="relative max-w-md mb-5">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -367,7 +470,43 @@ export default function AdminSettingsPage() {
           </div>
         )}
       </div>
+      </div>
+      )}
 
+      {/* Workspaces */}
+      {activeTab === 'workspaces' && (
+      <div key="workspaces" className={slideClass}>
+        <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
+          {workspacesList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <p className="text-sm">—</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {workspacesList.map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => openEditWs(w)}
+                  className="flex items-center gap-4 w-full px-5 py-3.5 text-left hover:bg-hover transition-colors"
+                >
+                  <CategoryIcon icon={w.icon || 'briefcase'} color={w.color || '#6366F1'} size="md" className="shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium text-foreground truncate">{w.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {w.default_currency}
+                      {w.role && <span className="uppercase tracking-wide"> · {w.role}</span>}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+
+      {activeTab === 'settings' && (
+      <div key="settings" className={slideClass}>
       {/* Theme and Customization Section */}
       <div className="grid grid-cols-1 gap-6 mb-8">
         <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
@@ -621,8 +760,13 @@ export default function AdminSettingsPage() {
         )}
       </div>
 
+      </div>
+      )}
+
       {/* Maintenance: backup + updates (moved here from the account menu) */}
-      <div className="rounded-xl border border-border/60 bg-card overflow-hidden mt-5">
+      {activeTab === 'maintenance' && (
+      <div key="maintenance" className={slideClass}>
+      <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
         <div className="px-5 py-4 border-b border-border/40">
           <div className="flex items-center gap-2 mb-0.5">
             <Wrench size={15} className="text-muted-foreground" />
@@ -655,8 +799,97 @@ export default function AdminSettingsPage() {
           </Button>
         </div>
       </div>
+      </div>
+      )}
 
       <UpdateAvailableDialog open={updateDialogOpen} onClose={() => setUpdateDialogOpen(false)} />
+
+      {/* Edit Workspace Dialog */}
+      <Dialog open={!!editWs} onOpenChange={(open) => !open && setEditWs(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('workspace.settingsMenu', 'Workspace settings')}</DialogTitle>
+            <DialogDescription>{editWs?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('groups.name')}</Label>
+              <Input value={wsName} onChange={(e) => setWsName(e.target.value)} maxLength={100} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('accounts.currency')}</Label>
+                <select
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={wsCurrency}
+                  onChange={(e) => setWsCurrency(e.target.value)}
+                >
+                  {(supportedCurrencies ?? []).map((c) => (
+                    <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('groups.color')}</Label>
+                <Input type="color" value={wsColor} onChange={(e) => setWsColor(e.target.value)} className="h-9 px-2 py-1" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('groups.icon')}</Label>
+              <IconPicker value={wsIcon} color={wsColor} onChange={setWsIcon} />
+            </div>
+            <button
+              type="button"
+              className="text-xs text-primary hover:text-primary/80 transition-colors"
+              onClick={async () => {
+                if (!editWs) return
+                await switchWorkspace(editWs.id)
+                navigate('/workspace/settings')
+              }}
+            >
+              {t('admin.workspaces.members')}
+            </button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditWs(null)}>{t('common.cancel')}</Button>
+            <Button
+              onClick={() => saveWsMutation.mutate()}
+              disabled={saveWsMutation.isPending || !wsName.trim()}
+            >
+              {saveWsMutation.isPending ? t('common.loading') : t('common.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Workspace Dialog */}
+      <Dialog open={wsCreateOpen} onOpenChange={setWsCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('workspace.createTitle', 'New workspace')}</DialogTitle>
+            <DialogDescription>{t('workspace.createDescription', '')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>{t('groups.name')}</Label>
+            <Input
+              value={wsNewName}
+              onChange={(e) => setWsNewName(e.target.value)}
+              placeholder={t('workspace.createPlaceholder', '')}
+              maxLength={100}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWsCreateOpen(false)}>{t('common.cancel')}</Button>
+            <Button
+              onClick={() => createWsMutation.mutate()}
+              disabled={createWsMutation.isPending || !wsNewName.trim()}
+            >
+              {createWsMutation.isPending ? t('common.loading') : t('common.create', 'Create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create User Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

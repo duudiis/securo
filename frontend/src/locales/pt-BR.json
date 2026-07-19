@@ -1463,6 +1463,14 @@
       "dateFormatYmdDesc": "Ordem ISO, ex.: 2026-06-04.",
       "updated": "Configuração atualizada",
       "maintenanceTitle": "Manutenção"
+    },
+    "tabs": {
+      "users": "Usuários",
+      "workspaces": "Workspaces",
+      "settings": "Configurações"
+    },
+    "workspaces": {
+      "members": "Gerenciar membros…"
     }
   },
   "onboarding": {

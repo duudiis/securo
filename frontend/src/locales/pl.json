@@ -1547,6 +1547,14 @@
       "dateFormatYmdDesc": "Kolejność ISO, np. 2026-06-04.",
       "updated": "Zaktualizowano ustawienie",
       "maintenanceTitle": "Konserwacja"
+    },
+    "tabs": {
+      "users": "Użytkownicy",
+      "workspaces": "Przestrzenie",
+      "settings": "Ustawienia"
+    },
+    "workspaces": {
+      "members": "Zarządzaj członkami…"
     }
   },
   "onboarding": {

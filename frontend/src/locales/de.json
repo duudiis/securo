@@ -1463,6 +1463,14 @@
       "dateFormatYmdDesc": "ISO-Reihenfolge, z.B. 2026-06-04.",
       "updated": "Einstellung aktualisiert",
       "maintenanceTitle": "Wartung"
+    },
+    "tabs": {
+      "users": "Benutzer",
+      "workspaces": "Workspaces",
+      "settings": "Einstellungen"
+    },
+    "workspaces": {
+      "members": "Mitglieder verwalten…"
     }
   },
   "onboarding": {

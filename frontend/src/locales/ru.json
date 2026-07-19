@@ -1463,6 +1463,14 @@
       "dateFormatYmdDesc": "ISO-порядок, например 2026-06-04.",
       "updated": "Настройка обновлена",
       "maintenanceTitle": "Обслуживание"
+    },
+    "tabs": {
+      "users": "Пользователи",
+      "workspaces": "Пространства",
+      "settings": "Настройки"
+    },
+    "workspaces": {
+      "members": "Управление участниками…"
     }
   },
   "onboarding": {

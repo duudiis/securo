@@ -1,15 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useMutation } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
-import { workspaces as workspacesApi } from '@/lib/api'
 import { resolveSupportedLang } from '@/lib/i18n'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,21 +17,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
   Check,
   ChevronUp,
   Languages,
   LogOut,
-  Plus,
   Repeat,
-  Settings,
   Shield,
   SlidersHorizontal,
   Sparkles,
@@ -90,37 +74,12 @@ interface AccountMenuProps {
 export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { current, workspaces, switchWorkspace, refresh } = useWorkspace()
+  const { current, workspaces, switchWorkspace } = useWorkspace()
   const { user, logout } = useAuth()
   const avatarUrl = useAvatar()
-  const [createOpen, setCreateOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [newName, setNewName] = useState('')
 
   const currentLang = resolveSupportedLang(i18n.resolvedLanguage ?? i18n.language)
-
-  const createMutation = useMutation({
-    mutationFn: () =>
-      workspacesApi.create({
-        name: newName.trim(),
-        self_membership: true,
-        locale: currentLang,
-      }),
-    onSuccess: async (ws) => {
-      toast.success(t('workspace.createSuccess', 'Workspace created'))
-      await refresh()
-      await switchWorkspace(ws.id)
-      setCreateOpen(false)
-      setNewName('')
-      navigate('/workspace/settings')
-    },
-    onError: (e: unknown) => {
-      const detail =
-        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
-        (e instanceof Error ? e.message : 'Failed to create workspace')
-      toast.error(detail)
-    },
-  })
 
   if (!current || !user) return null
 
@@ -187,25 +146,16 @@ export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
             </>
           )}
 
-          {/* Workspace actions */}
+          {/* Account page: profile picture, password, 2FA, passkeys */}
           <DropdownMenuItem
-            onClick={() => navigate('/workspace/settings')}
+            onClick={() => navigate('/account')}
             className="flex items-center gap-2"
           >
-            <Settings size={14} />
-            <span className="flex-1">{t('workspace.settingsMenu', 'Workspace settings')}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus size={14} />
-            <span className="flex-1">{t('workspace.create', 'New workspace')}</span>
+            <UserIcon size={14} />
+            {t('nav.account')}
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
-
-          {/* Admin */}
+          {/* Admin (workspace settings + creation live here now) */}
           {user.is_superuser && (
             <DropdownMenuItem
               onClick={() => navigate('/admin')}
@@ -215,15 +165,6 @@ export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
               {t('nav.groupAdmin')}
             </DropdownMenuItem>
           )}
-
-          {/* Account page: profile picture, password, 2FA, passkeys */}
-          <DropdownMenuItem
-            onClick={() => navigate('/account')}
-            className="flex items-center gap-2"
-          >
-            <UserIcon size={14} />
-            {t('nav.account')}
-          </DropdownMenuItem>
 
           {/* Setup — the sidebar's former SETUP section, recurring last */}
           <DropdownMenuSub>
@@ -353,52 +294,6 @@ export function WorkspaceSwitcher({ agentsEnabled }: AccountMenuProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* New workspace dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('workspace.createTitle', 'New workspace')}</DialogTitle>
-            <DialogDescription>
-              {t(
-                'workspace.createDescription',
-                'A workspace holds its own accounts, categories, budgets, and goals. You can invite people into it from the workspace settings page.',
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="ws-create-name" className="text-[13px]">
-                {t('common.name', 'Name')}
-              </Label>
-              <Input
-                id="ws-create-name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder={t('workspace.createPlaceholder', 'e.g. Side project, Family')}
-                className="h-10 rounded-lg"
-                autoFocus
-                maxLength={100}
-              />
-            </div>
-          </div>
-          <DialogFooter className="mt-2">
-            <Button
-              variant="outline"
-              onClick={() => setCreateOpen(false)}
-              className="rounded-lg"
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={() => createMutation.mutate()}
-              disabled={createMutation.isPending || !newName.trim()}
-              className="rounded-lg"
-            >
-              {createMutation.isPending ? t('common.loading') : t('common.create', 'Create')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   )
 }
